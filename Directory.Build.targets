@@ -1,0 +1,9 @@
+<Project>
+  <Target Name="CopyDeepskinRuntimeDlls" AfterTargets="Build" Condition="Exists('$(ProjectDir)..\bin\DeepskinSDK.dll')">
+    <ItemGroup>
+      <DeepskinRuntimeDll Include="$(ProjectDir)..\bin\DeepskinSDK.dll" />
+      <DeepskinRuntimeDll Include="$(ProjectDir)..\bin\HIDdAPI.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(DeepskinRuntimeDll)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

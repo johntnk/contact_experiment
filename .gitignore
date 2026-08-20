@@ -1,0 +1,49 @@
+# Visual Studio and build output
+.vs/
+**/obj/
+**/Debug/
+**/Release/
+**/x64/
+**/Win32/
+*.ilk
+*.pdb
+*.ipch
+*.suo
+*.user
+
+# Vendor binaries and executable artifacts
+*.dll
+*.exe
+*.lib
+
+# Python caches and local environments
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Raw, external, generated, and model data
+Tool/record/
+data/raw/
+data/external/
+data/interim/
+*.npz
+*.npy
+*.parquet
+*.joblib
+*.pkl
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.local.yaml
+*.local.yml
+
+# Operating-system files
+.DS_Store
+Thumbs.db
+desktop.ini

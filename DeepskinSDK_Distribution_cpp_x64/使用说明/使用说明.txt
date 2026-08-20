@@ -1,0 +1,855 @@
+================================================================================
+                    DeepskinSDK 使用说明（x64版本）
+================================================================================
+
+一、概述
+--------------------------------------------------------------------------------
+
+硬件连接方式：
+  - 传感器通过 USB 接口连接到 Windows 上位机
+
+架构：
+  - 底层：HIDdAPI.dll（HID通信库，供应商提供）
+  - 上层：DeepskinSDK.dll（本SDK，封装业务逻辑）
+
+本SDK封装了以下核心功能：
+  1. 设备连接与初始化
+  2. 传感器数据实时采集
+  3. 数据滤波与基线校准
+  4. 手势识别（目前有6种手势）
+  5. 每次动作完整数据JSON输出
+
+使用者无需了解底层HID通信细节，只需调用本SDK提供的API即可。
+
+
+二、环境要求
+--------------------------------------------------------------------------------
+
+  操作系统：Windows 10/11（64位）
+  编译器：Visual Studio 2019/2022
+  编译平台：x64（本包为64位版本）
+  硬件：电子皮肤传感器，USB连接
+
+
+三、文件说明
+--------------------------------------------------------------------------------
+
+  本包目录结构：
+
+  DeepskinSDK_Distribution_cpp_x64/
+  ├── bin/
+  │   ├── DeepskinSDK.dll    ← SDK主库（64位）
+  │   └── HIDdAPI.dll        ← HID设备通信库（64位）
+  │
+  ├── include/
+  │   ├── deepskin_types.h   ← 类型定义（结构体、错误码、手势类型）
+  │   └── deepskin_sensor.h  ← API接口声明（所有可用函数）
+  │
+  ├── lib/
+  │   └── DeepskinSDK.lib    ← 链接导入库
+  │
+  ├── test_gesture/          ← 示例：手势检测
+  ├── test_json/             ← 示例：JSON输出
+  ├── test_matrix/           ← 示例：矩阵显示
+  ├── 快速开始.txt
+  └── 使用说明/
+      ├── 使用说明.txt       ← 本文档
+      └── 图片1~4.png        ← 截图
+
+
+四、快速接入（详细步骤）
+--------------------------------------------------------------------------------
+
+【步骤1】创建Visual Studio项目
+
+  1. 打开Visual Studio → 创建新项目
+  2. 选择「控制台应用」或「空项目」
+  3. 项目名称自定义，例如"MyTouchApp"
+  4. 位置选择你的工作目录
+
+【步骤2】设置编译平台为x64
+
+  重要：本SDK是64位，必须选择x64平台！
+
+  方法A（推荐）：
+  1. 顶部工具栏找到「配置管理器」（显示"Debug/Release"的下拉框旁边）
+  2. 点击「活动解决方案平台」→ 选择「x64」
+  3. 如果没有x64选项，点击「新建」→ 选择x64 → 复制自Win32 → 确定
+
+  方法B：
+  1. 菜单栏 → 生成 → 配置管理器
+  2. 活动解决方案平台 → x64
+
+【步骤3】复制SDK文件到项目
+
+  3.1 复制DLL文件（运行时需要）
+      将以下两个文件复制到你的项目目录（与.sln同级）：
+        bin/DeepskinSDK.dll
+        bin/HIDdAPI.dll
+
+  3.2 复制头文件（编译时需要）
+      将以下文件复制到项目目录，例如创建include文件夹：
+        include/deepskin_types.h
+        include/deepskin_sensor.h
+
+  3.3 复制导入库（链接时需要）
+      将以下文件复制到项目目录，例如创建lib文件夹：
+        lib/DeepskinSDK.lib
+
+【步骤4】配置Visual Studio项目属性
+
+  4.1 添加头文件路径
+      右键项目 → 属性 → C/C++ → 常规 → 附加包含目录
+      添加：..\include
+      （如果头文件放在项目同级的include文件夹）
+
+  4.2 添加库文件路径
+      右键项目 → 属性 → 链接器 → 常规 → 附加库目录
+      添加：..\lib
+      （如果库文件放在项目同级的lib文件夹）
+
+  4.3 添加导入库
+      右键项目 → 属性 → 链接器 → 输入 → 附加依赖项
+      添加：DeepskinSDK.lib
+
+  4.4 确认输出目录（可选）
+      右键项目 → 属性 → 常规 → 输出目录
+      确保DLL和EXE在同一目录，或者把DLL复制到EXE输出目录
+
+【步骤5】编写代码
+
+  创建main.cpp，写入以下代码：
+
+  // my_touch_app.cpp
+  #include <stdio.h>
+  #include "deepskin_sensor.h"
+  #pragma comment(lib, "DeepskinSDK.lib")
+
+  int main() {
+      // 1. 初始化SDK
+      int ret = deepskin_init();
+      if (ret != DEEPSKIN_OK) {
+          printf("初始化失败: %s\n", deepskin_get_last_error());
+          return -1;
+      }
+      printf("SDK初始化成功\n");
+
+      // 2. 获取传感器尺寸
+      int tx = 0, rx = 0;
+      deepskin_get_matrix_size(&tx, &rx);
+      printf("传感器矩阵: %d x %d\n", tx, rx);
+
+      // 3. 启动数据采集
+      ret = deepskin_enable();
+      if (ret != DEEPSKIN_OK) {
+          printf("启动采集失败: %s\n", deepskin_get_last_error());
+          deepskin_release();
+          return -1;
+      }
+      printf("数据采集已启动，请触控传感器...\n");
+
+      // 4. 循环检测手势
+      int gestureCount = 0;
+      while (1) {
+          DeepskinGesture gesture;
+          if (deepskin_get_gesture(&gesture)) {
+              gestureCount++;
+              printf("\n[手势 #%d] 类型=%d 名称=%s\n",
+                  gestureCount,
+                  gesture.gesture_type,
+                  gesture.gesture_name);
+              printf("  力度: max=%d avg=%d\n",
+                  gesture.force_max, gesture.force_avg);
+              printf("  面积: max=%d avg=%d\n",
+                  gesture.area_max, gesture.area_avg);
+              printf("  时间: %.1fms\n", gesture.duration_ms);
+          }
+          // 50ms轮询一次
+          Sleep(50);
+      }
+
+      // 5. 退出时释放
+      deepskin_disable();
+      deepskin_release();
+      return 0;
+  }
+
+【步骤6】编译运行
+
+  1. 生成 → 重新生成解决方案（Ctrl+Shift+B）
+  2. 确认编译成功，无报错
+  3. 确认DeepskinSDK.dll和HIDdAPI.dll在EXE同目录
+  4. 运行程序（F5），触控传感器查看结果
+
+  注意：如果提示"找不到DLL"，说明DLL没有在EXE同目录。
+        把bin文件夹里的两个DLL复制到EXE输出目录即可。
+
+
+五、API详细说明
+--------------------------------------------------------------------------------
+
+=== 基础控制函数 ===
+
+【deepskin_init】初始化SDK
+  原型：int deepskin_init(void);
+  参数：无
+  返回值：
+    DEEPSKIN_OK (0)          - 成功
+    DEEPSKIN_ERR_NOT_FOUND (-1) - 未找到设备
+    DEEPSKIN_ERR_OPEN_FAILED (-2) - 设备打开失败
+  说明：
+    - 连接传感器设备
+    - 内部会枚举HID设备并打开
+    - 重复调用会直接返回成功，不会重复连接
+    - 必须在其他API之前调用
+
+【deepskin_release】释放SDK
+  原型：void deepskin_release(void);
+  参数：无
+  返回值：无
+  说明：
+    - 断开传感器连接
+    - 释放所有资源
+    - 程序退出前必须调用
+    - 调用后需要重新init才能使用
+
+【deepskin_enable】启动数据采集
+  原型：int deepskin_enable(void);
+  参数：无
+  返回值：
+    DEEPSKIN_OK (0)          - 成功
+    DEEPSKIN_ERR_NOT_FOUND (-1) - 未初始化
+    DEEPSKIN_ERR_OPEN_FAILED (-2) - 启动失败
+  说明：
+    - 启动后台线程接收传感器数据
+    - 会自动进行基线校准和IIR滤波
+    - 调用后可以开始获取矩阵和手势数据
+
+【deepskin_disable】停止数据采集
+  原型：void deepskin_disable(void);
+  参数：无
+  返回值：无
+  说明：
+    - 停止后台数据采集线程
+    - 保留已采集的数据和手势历史
+
+【deepskin_reset】重置状态
+  原型：void deepskin_reset(void);
+  参数：无
+  返回值：无
+  说明：
+    - 清空手势识别历史
+    - 重置滤波器状态
+    - 重新校准基线
+    - 不影响设备连接状态
+
+
+=== 数据获取函数 ===
+
+【deepskin_get_diff_matrix】获取差分矩阵
+  原型：int deepskin_get_diff_matrix(double* out_data, int out_len);
+  参数：
+    out_data - 输出数组，用于存放矩阵数据（调用者分配）
+    out_len  - 数组长度，必须 >= tx * rx
+  返回值：
+    DEEPSKIN_OK (0)          - 成功
+    DEEPSKIN_ERR_NOT_STARTED (-3) - 未启动采集
+    DEEPSKIN_ERR_BUFFER_SMALL (-4) - 缓冲区太小
+  说明：
+    - 返回当前帧的差分矩阵（基线 - 当前值）
+    - 正值表示有压力，值越大压力越大
+    - 0表示无触控
+    - 矩阵大小为 tx * rx，可通过deepskin_get_matrix_size获取
+    - 数据按行优先存储：data[row * rx + col]
+
+  示例：
+    int tx, rx;
+    deepskin_get_matrix_size(&tx, &rx);
+    double* matrix = (double*)malloc(tx * rx * sizeof(double));
+    deepskin_get_diff_matrix(matrix, tx * rx);
+    // matrix[0] 是左上角的值
+    // matrix[tx*rx-1] 是右下角的值
+    free(matrix);
+
+【deepskin_get_gesture】获取手势识别结果
+  原型：int deepskin_get_gesture(DeepskinGesture* gesture);
+  参数：
+    gesture - 输出结构体，包含手势详细信息（调用者分配）
+  返回值：
+    1 - 识别到新的手势（触控动作完成）
+    0 - 无新手势（正在触控中或未触控）
+  说明：
+    - 每次完整的触控动作（按下→保持→抬起）会产生一个手势
+    - 返回1时，gesture结构体包含该手势的所有数据
+    - 返回0时，gesture结构体内容不变
+    - 需要先调用deepskin_enable启动采集
+
+  gesture结构体字段：
+    // 手势类型
+    int gesture_type;        // 手势编号（1-6）
+    const char* gesture_name; // 手势名称字符串
+
+    // 时序信息
+    int start_frame;         // 起始帧号
+    int end_frame;           // 结束帧号
+    int duration_frames;     // 持续帧数
+    double duration_ms;      // 持续时间（毫秒）
+
+    // 力度统计
+    int force_max;           // 最大力度
+    int force_avg;           // 平均力度
+    int force_min;           // 最小力度
+    int force_peak;          // 峰值力度
+    double force_std_dev;    // 力度标准差
+    double force_energy;     // 力度能量（平方和）
+
+    // 面积统计
+    int area_max;            // 最大接触面积（活跃单元格数）
+    int area_avg;            // 平均接触面积
+    int area_min;            // 最小接触面积
+    double area_std_dev;     // 面积标准差
+    double contact_ratio;    // 接触比例（活跃单元格/总单元格）
+
+    // 峰值点（前5个最高压力点）
+    DeepskinPeakInfo top_peaks[5]; // {row, col, value}
+    int top_peaks_count;     // 实际峰值数量
+    int total_peak_count;    // 总峰值数量
+
+    // 运动轨迹
+    double centroid_start_x; // 起始质心X
+    double centroid_start_y; // 起始质心Y
+    double centroid_end_x;   // 结束质心X
+    double centroid_end_y;   // 结束质心Y
+    double drift;            // 总漂移距离
+    double drift_x;          // X方向漂移
+    double drift_y;          // Y方向漂移
+    double total_distance;   // 总移动距离
+    double velocity_avg;     // 平均速度
+    double velocity_max;     // 最大速度
+    double acceleration_avg; // 平均加速度
+
+    // 形状特征
+    int shape_width;         // 最大宽度
+    int shape_height;        // 最大高度
+    double shape_aspect_ratio;  // 平均宽高比
+    double shape_perimeter;  // 平均周长
+    double shape_convexity;  // 凸度（活跃面积/包围盒面积）
+    double shape_eccentricity;  // 离心率（0=圆形, 1=线形）
+    double shape_fill_ratio; // 填充率（活跃面积/包围盒面积）
+
+    // 扩散统计
+    double spread_max;       // 最大扩散值
+    double spread_avg;       // 平均扩散值
+    double spread_min;       // 最小扩散值
+    double spread_std_dev;   // 扩散标准差
+
+    // 稳定性
+    double centroid_variance_x; // 质心X方差
+    double centroid_variance_y; // 质心Y方差
+
+【deepskin_get_current_json】获取当前触控实时JSON
+  原型：int deepskin_get_current_json(char* out_json, int buf_size);
+  参数：
+    out_json - 输出缓冲区
+    buf_size - 缓冲区大小（建议1024以上）
+  返回值：
+    DEEPSKIN_OK (0)          - 成功
+    DEEPSKIN_ERR_NOT_STARTED (-3) - 未启动采集
+    DEEPSKIN_ERR_BUFFER_SMALL (-4) - 缓冲区太小
+  说明：
+    - 返回当前正在触控时的实时数据
+    - 未触控时返回空JSON: {}
+    - 触控中返回当前帧的力度、面积、帧数
+
+  返回JSON示例：
+    {
+        "status": "touching",
+        "force_current": 1234,
+        "area_current": 45,
+        "frame_count": 67
+    }
+
+【deepskin_get_recent_gestures_json】获取最近N个手势JSON
+  原型：int deepskin_get_recent_gestures_json(int count, char* out_json, int buf_size);
+  参数：
+    count    - 获取最近几个手势（1=最近1个，2=最近2个...）
+    out_json - 输出缓冲区
+    buf_size - 缓冲区大小（建议8192以上）
+  返回值：
+    DEEPSKIN_OK (0)          - 成功
+    DEEPSKIN_ERR_NOT_STARTED (-3) - 未启动采集
+    DEEPSKIN_ERR_BUFFER_SMALL (-4) - 缓冲区太小
+  说明：
+    - 返回最近N个手势的完整JSON数据
+    - 包含每个手势的所有统计信息
+    - 历史最多保存20个手势
+
+  返回JSON结构：
+    {
+        "events": {
+            "action1": {
+                "timing": { ... },
+                "force": { "max", "avg", "min", "timeline": [...] },
+                "area": { "max", "avg", "min", "timeline": [...] },
+                "top_peaks": [ {row, col, value}, ... ],
+                "trajectory": { "start", "end", "drift", "path": [...] },
+                "shape": { "width", "height", "aspect_ratio", ... },
+                "spread": { "max", "avg", "min", ... },
+                "stability": { "centroid_variance_x", "centroid_variance_y" }
+            },
+            "action2": { ... }
+        }
+    }
+
+【deepskin_get_all_gestures_json】获取所有历史手势JSON
+  原型：int deepskin_get_all_gestures_json(char* out_json, int buf_size);
+  参数：
+    out_json - 输出缓冲区
+    buf_size - 缓冲区大小（建议32768以上）
+  返回值：同deepskin_get_recent_gestures_json
+  说明：
+    - 等同于deepskin_get_recent_gestures_json(20, out, size)
+    - 返回所有历史手势（最多20个）
+
+
+=== 状态查询函数 ===
+
+【deepskin_is_touching】查询是否正在触控
+  原型：int deepskin_is_touching(void);
+  参数：无
+  返回值：
+    1 - 正在触控
+    0 - 未触控
+  说明：
+    - 实时查询当前触控状态
+    - 可用于UI状态显示
+
+【deepskin_get_matrix_size】获取传感器矩阵尺寸
+  原型：int deepskin_get_matrix_size(int* tx, int* rx);
+  参数：
+    tx - 输出，矩阵行数（可为NULL）
+    rx - 输出，矩阵列数（可为NULL）
+  返回值：
+    DEEPSKIN_OK (0)          - 成功
+    DEEPSKIN_ERR_NOT_FOUND (-1) - 未初始化
+  说明：
+    - tx = 行数（通常是较长的一边）
+    - rx = 列数（通常是较短的一边）
+    - 总单元格数 = tx * rx
+
+【deepskin_get_last_error】获取错误信息
+  原型：const char* deepskin_get_last_error(void);
+  参数：无
+  返回值：错误描述字符串（静态缓冲区，不要free）
+  说明：
+    - 返回最后一次错误的描述
+    - 成功时返回"No error"
+    - 字符串存储在静态缓冲区，下次调用会覆盖
+
+
+六、手势类型说明
+--------------------------------------------------------------------------------
+
+  编号    名称          宏定义                识别规则
+  ──────────────────────────────────────────────────────────────────────────
+   1     PalmPress     GESTURE_PALM_PRESS    高力度(>1000)或大面积(>100)
+                                              + 持续时间>1秒
+
+   2     Slap          GESTURE_SLAP          高力度(>1000)或大面积(>100)
+                                              （短时间，<1秒）
+
+   3     Stroke        GESTURE_STROKE        垂直矩形(h>10, w<10, h>2w)
+                                              + 水平漂移大于垂直漂移
+
+   4     FistSmash     GESTURE_FIST_SMASH    中等力度(>300) + 适中面积(>20)
+                                              + 低扩散(<3.0) + 短时间(<1秒)
+
+   5     FingerGather  GESTURE_FINGER_GATHER 高扩散值(>4.0)
+                                              （接触面分散）
+
+   6     SingleTap     GESTURE_SINGLE_TAP    低力度(<100) + 小面积(<10)
+
+  注意：
+    - 识别规则基于阈值判断，可根据实际使用场景调整
+    - 需要完整的触控动作（按下→保持→抬起）才能触发识别
+    - 按下时间过短（<2帧）会被忽略
+
+
+七、示例代码
+--------------------------------------------------------------------------------
+
+【示例1】基础手势检测
+
+  #include <stdio.h>
+  #include "deepskin_sensor.h"
+  #pragma comment(lib, "DeepskinSDK.lib")
+
+  int main() {
+      // 初始化
+      if (deepskin_init() != DEEPSKIN_OK) {
+          printf("初始化失败: %s\n", deepskin_get_last_error());
+          return -1;
+      }
+
+      // 获取传感器尺寸
+      int tx = 0, rx = 0;
+      deepskin_get_matrix_size(&tx, &rx);
+      printf("传感器: %d x %d\n", tx, rx);
+
+      // 启动采集
+      if (deepskin_enable() != DEEPSKIN_OK) {
+          printf("启动失败\n");
+          deepskin_release();
+          return -1;
+      }
+
+      printf("请触控传感器...\n");
+
+      // 循环检测手势
+      int count = 0;
+      while (1) {
+          DeepskinGesture gesture;
+          if (deepskin_get_gesture(&gesture)) {
+              count++;
+              printf("#%d 手势=%d(%s) 力度=%d 面积=%d 时间=%.0fms\n",
+                  count,
+                  gesture.gesture_type,
+                  gesture.gesture_name,
+                  gesture.force_max,
+                  gesture.area_max,
+                  gesture.duration_ms);
+          }
+          Sleep(50);
+      }
+
+      // 释放
+      deepskin_disable();
+      deepskin_release();
+      return 0;
+  }
+
+
+【示例2】获取手势JSON
+
+  #include <stdio.h>
+  #include "deepskin_sensor.h"
+  #pragma comment(lib, "DeepskinSDK.lib")
+
+  int main() {
+      if (deepskin_init() != DEEPSKIN_OK) return -1;
+      deepskin_enable();
+
+      char json[16384];
+      int count = 0;
+
+      while (1) {
+          DeepskinGesture gesture;
+          if (deepskin_get_gesture(&gesture)) {
+              count++;
+              printf("--- 手势 #%d ---\n", count);
+
+              // 获取最近1个手势的完整JSON
+              if (deepskin_get_recent_gestures_json(1, json, sizeof(json)) == DEEPSKIN_OK) {
+                  printf("%s\n\n", json);
+              }
+          }
+          Sleep(50);
+      }
+
+      deepskin_disable();
+      deepskin_release();
+      return 0;
+  }
+
+
+【示例3】实时显示传感器矩阵
+
+  #include <windows.h>
+  #include <stdio.h>
+  #include <stdlib.h>
+  #include "deepskin_sensor.h"
+  #pragma comment(lib, "DeepskinSDK.lib")
+
+  int main() {
+      if (deepskin_init() != DEEPSKIN_OK) return -1;
+
+      int tx = 0, rx = 0;
+      deepskin_get_matrix_size(&tx, &rx);
+
+      if (deepskin_enable() != DEEPSKIN_OK) {
+          deepskin_release();
+          return -1;
+      }
+
+      double* matrix = (double*)malloc(tx * rx * sizeof(double));
+      HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+
+      while (1) {
+          deepskin_get_diff_matrix(matrix, tx * rx);
+
+          // 光标回到左上角，原地刷新
+          COORD coord = {0, 0};
+          SetConsoleCursorPosition(hConsole, coord);
+
+          // 打印矩阵
+          for (int y = 0; y < rx; y++) {
+              for (int x = 0; x < tx; x++) {
+                  int val = (int)matrix[y * tx + x];
+                  if (val > 0)
+                      printf("%4d ", val);
+                  else
+                      printf("    ");
+              }
+              printf("\n");
+          }
+          printf("\n按Q退出\n");
+
+          if (GetAsyncKeyState('Q') & 0x8000) break;
+          Sleep(100);
+      }
+
+      free(matrix);
+      deepskin_disable();
+      deepskin_release();
+      return 0;
+  }
+
+
+八、API速查表
+--------------------------------------------------------------------------------
+
+  函数名                                返回值    说明
+  ─────────────────────────────────────────────────────────────────────────
+  基础控制
+  deepskin_init()                       int      初始化，连接传感器
+  deepskin_release()                    void     释放资源
+  deepskin_enable()                     int      启动数据采集
+  deepskin_disable()                    void     停止数据采集
+  deepskin_reset()                      void     重置手势状态
+
+  数据获取
+  deepskin_get_diff_matrix(out, len)    int      获取差分矩阵
+  deepskin_get_gesture(gesture)         int      获取手势（1=有,0=无）
+  deepskin_get_current_json(out, size)  int      获取当前触控JSON
+  deepskin_get_recent_gestures_json(    int      获取最近N个手势JSON
+      count, out, size)
+  deepskin_get_all_gestures_json(       int      获取所有手势JSON
+      out, size)
+
+  状态查询
+  deepskin_is_touching()                int      是否正在触控
+  deepskin_get_matrix_size(tx, rx)      int      获取矩阵尺寸
+  deepskin_get_last_error()             char*    获取错误信息
+
+  返回值说明：
+    DEEPSKIN_OK (0)              成功
+    DEEPSKIN_ERR_NOT_FOUND (-1)  未找到设备/未初始化
+    DEEPSKIN_ERR_OPEN_FAILED (-2) 设备打开失败
+    DEEPSKIN_ERR_NOT_STARTED (-3) 未启动采集
+    DEEPSKIN_ERR_BUFFER_SMALL (-4) 缓冲区太小
+
+
+九、VS Code / MinGW / GCC 用户说明
+--------------------------------------------------------------------------------
+
+如果你使用VS Code而非Visual Studio，能否直接使用本SDK取决于你的编译器：
+
+  编译器类型        .lib文件    .dll文件    .h头文件    使用方式
+  ─────────────────────────────────────────────────────────────
+  MSVC Build Tools   ✅ 可用     ✅ 可用     ✅ 可用     方式A（标准链接）
+  MinGW / GCC        ❌ 不可用   ✅ 可用     ✅ 可用     方式B（动态加载）
+  Clang              ⚠️ 需配置   ✅ 可用     ✅ 可用     方式A或B
+
+
+【如何判断你的编译器类型】
+
+  在终端中输入以下命令：
+
+  输入 gcc --version
+  → 如果显示版本号（如 gcc (x86_64-posix-seh-rev0, Built by MinGW-Builds project)...）
+    说明是MinGW/GCC，需要用方式B
+
+  输入 cl
+  → 如果显示 "Microsoft (R) C/C++ Optimizing Compiler..."
+    说明是MSVC，可以用方式A
+
+
+【方式A】MSVC编译器（标准链接方式）
+
+  直接按照第四节「快速接入」的步骤操作即可。
+  需要.lib文件、.h头文件、.dll文件。
+
+
+【方式B】MinGW/GCC编译器（动态加载方式）
+
+  MinGW不识别MSVC格式的.lib文件，因此不能用 #pragma comment(lib) 方式。
+  改用 Windows API 的 LoadLibrary + GetProcAddress 动态加载DLL。
+
+  步骤1：准备文件
+    只需要两个DLL文件，不需要.lib和.h：
+      DeepskinSDK.dll
+      HIDdAPI.dll
+
+  步骤2：编写代码
+
+    #include <stdio.h>
+    #include <windows.h>
+
+    // ===== 函数指针类型定义 =====
+    // （对应 deepskin_sensor.h 中声明的函数）
+
+    typedef int           (*PFN_init)(void);
+    typedef void          (*PFN_release)(void);
+    typedef int           (*PFN_enable)(void);
+    typedef void          (*PFN_disable)(void);
+    typedef void          (*PFN_reset)(void);
+    typedef int           (*PFN_get_diff_matrix)(double*, int);
+    typedef int           (*PFN_get_current_json)(char*, int);
+    typedef int           (*PFN_get_gesture)(void*);
+    typedef int           (*PFN_get_all_gestures_json)(char*, int);
+    typedef int           (*PFN_get_recent_gestures_json)(int, char*, int);
+    typedef int           (*PFN_is_touching)(void);
+    typedef int           (*PFN_get_matrix_size)(int*, int*);
+    typedef const char*   (*PFN_get_last_error)(void);
+
+    // ===== DeepskinGesture 结构体定义 =====
+    // （必须和SDK中的定义完全一致）
+
+    typedef struct {
+        int gesture_type;
+        const char* gesture_name;
+        int start_frame, end_frame, duration_frames;
+        double duration_ms;
+        int force_max, force_avg, force_min, force_peak;
+        double force_std_dev, force_energy;
+        int area_max, area_avg, area_min;
+        double area_std_dev, contact_ratio;
+        // ... 如需使用更多字段，参考 include/deepskin_types.h 补全
+    } DeepskinGesture;
+
+    // ===== 主函数 =====
+
+    int main() {
+        // 1. 加载DLL
+        HMODULE hDll = LoadLibrary("DeepskinSDK.dll");
+        if (!hDll) {
+            printf("加载DeepskinSDK.dll失败，错误码: %lu\n", GetLastError());
+            return -1;
+        }
+
+        // 2. 获取函数地址
+        PFN_init              pInit              = (PFN_init)GetProcAddress(hDll, "deepskin_init");
+        PFN_release           pRelease           = (PFN_release)GetProcAddress(hDll, "deepskin_release");
+        PFN_enable            pEnable            = (PFN_enable)GetProcAddress(hDll, "deepskin_enable");
+        PFN_disable           pDisable           = (PFN_disable)GetProcAddress(hDll, "deepskin_disable");
+        PFN_get_gesture       pGetGesture        = (PFN_get_gesture)GetProcAddress(hDll, "deepskin_get_gesture");
+        PFN_get_matrix_size   pGetMatrixSize     = (PFN_get_matrix_size)GetProcAddress(hDll, "deepskin_get_matrix_size");
+        PFN_get_diff_matrix   pGetDiffMatrix     = (PFN_get_diff_matrix)GetProcAddress(hDll, "deepskin_get_diff_matrix");
+        PFN_is_touching       pIsTouching        = (PFN_is_touching)GetProcAddress(hDll, "deepskin_is_touching");
+        PFN_get_last_error    pGetError          = (PFN_get_last_error)GetProcAddress(hDll, "deepskin_get_last_error");
+
+        // 3. 检查函数地址
+        if (!pInit || !pEnable || !pGetGesture || !pGetMatrixSize) {
+            printf("获取函数地址失败\n");
+            FreeLibrary(hDll);
+            return -1;
+        }
+
+        // 4. 初始化SDK
+        if (pInit() != 0) {
+            printf("初始化失败: %s\n", pGetError());
+            FreeLibrary(hDll);
+            return -1;
+        }
+
+        // 5. 获取传感器尺寸
+        int tx = 0, rx = 0;
+        pGetMatrixSize(&tx, &rx);
+        printf("传感器矩阵: %d x %d\n", tx, rx);
+
+        // 6. 启动采集
+        if (pEnable() != 0) {
+            printf("启动采集失败: %s\n", pGetError());
+            pRelease();
+            FreeLibrary(hDll);
+            return -1;
+        }
+        printf("数据采集已启动，请触控传感器...\n");
+
+        // 7. 循环检测手势
+        int count = 0;
+        while (1) {
+            DeepskinGesture gesture;
+            if (pGetGesture(&gesture)) {
+                count++;
+                printf("\n[手势 #%d] 类型=%d 名称=%s\n",
+                    count, gesture.gesture_type, gesture.gesture_name);
+                printf("  力度: max=%d avg=%d\n",
+                    gesture.force_max, gesture.force_avg);
+                printf("  面积: max=%d avg=%d\n",
+                    gesture.area_max, gesture.area_avg);
+                printf("  时间: %.1fms\n", gesture.duration_ms);
+            }
+            Sleep(50);
+        }
+
+        // 8. 退出
+        pDisable();
+        pRelease();
+        FreeLibrary(hDll);
+        return 0;
+    }
+
+  步骤3：编译
+
+    在VS Code终端或命令行执行：
+      gcc main.c -o app.exe -lkernel32
+
+    运行：
+      app.exe
+
+    注意：确保DeepskinSDK.dll和HIDdAPI.dll在exe同目录
+
+
+十、注意事项
+--------------------------------------------------------------------------------
+
+  1. 平台要求：本包为x64版本，必须用x64平台编译
+     如需x86版本，请使用 DeepskinSDK_Distribution_cpp_x86
+
+  2. DLL依赖：DeepskinSDK.dll 和 HIDdAPI.dll 必须同时存在
+     两个DLL都必须放在EXE同目录下
+
+  3. 调用顺序：init → enable → 获取数据 → disable → release
+     不可跳过步骤，不可在未init时调用其他API
+
+  4. 手势识别：需要完整的触控动作（按下→保持→抬起）
+     按下时间过短（<32ms）可能无法识别
+
+  5. 线程安全：数据采集在后台线程进行
+     API调用本身是线程安全的，可在多线程中调用
+
+  6. 重复初始化：已初始化时再次调用init会直接返回成功
+     不会重复连接设备
+
+  7. 错误处理：任何API调用失败后，调用deepskin_get_last_error()查看原因
+
+  8. 缓冲区大小：JSON输出需要足够大的缓冲区
+     建议：current_json=1024, recent_json=8192, all_json=32768
+
+  9. 历史记录：手势历史最多保存20个
+     超出后最早的记录会被丢弃
+
+
+十一、截图
+--------------------------------------------------------------------------------
+1、本产品自研工具所示画面，包括矩阵数值、图像、手势识别、动作解析（图一）
+2、动作识别代码示例运行截图（图二）
+3、动作json拆解代码示例运行截图（图三）
+4、矩阵获取代码示例运行截图（图四）
+
+
+================================================================================
+
+                            文档结束
+================================================================================

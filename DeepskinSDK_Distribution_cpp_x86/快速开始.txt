@@ -1,0 +1,285 @@
+========================================
+  DeepskinSDK 快速开始指南（x86版本）
+========================================
+
+一、运行测试程序
+----------------------------------------
+
+1. 进入 test_gesture 文件夹
+2. 将 bin 文件夹中的两个DLL复制过来：
+   - DeepskinSDK.dll
+   - HIDdAPI.dll
+3. 双击运行 test_gesture.exe
+4. 触控传感器，查看手势识别结果
+
+三个测试程序：
+- test_gesture: 手势检测，输出类型编号(1-6)
+- test_json: JSON输出，显示完整手势数据
+- test_matrix: 矩阵显示，实时查看传感器数据
+
+
+二、在自己的项目中使用
+----------------------------------------
+
+【方式A】Visual Studio（推荐）
+
+  步骤1：创建项目
+    打开Visual Studio → 创建「控制台应用」或「空项目」
+
+  步骤2：设置平台为Win32 (x86)
+    顶部工具栏 → 配置管理器 → 活动解决方案平台 → 选择Win32
+
+  步骤3：复制文件
+    复制 bin/DeepskinSDK.dll 和 bin/HIDdAPI.dll 到项目目录
+    复制 include/ 下两个头文件到项目目录
+    复制 lib/DeepskinSDK.lib 到项目目录
+
+  步骤4：配置项目属性
+    右键项目 → 属性：
+    - C/C++ → 常规 → 附加包含目录 → 添加 ..\include
+    - 链接器 → 常规 → 附加库目录 → 添加 ..\lib
+    - 链接器 → 输入 → 附加依赖项 → 添加 DeepskinSDK.lib
+
+  步骤5：编写代码，编译运行
+
+
+【方式B】VS Code + MSVC Build Tools
+
+  如果你的VS Code安装了Microsoft C/C++扩展，并且系统装了
+  MSVC Build Tools（微软官方编译工具），配置方法和上面一样。
+
+  判断方法：在终端输入 cl，如果显示"Microsoft (R) C/C++..."
+  说明是MSVC，可以直接用.lib文件。
+
+
+【方式C】VS Code + MinGW（GCC）
+
+  如果你的VS Code装的是MinGW（GCC），.lib文件无法直接使用，
+  需要用动态加载方式。详见下方「三、MinGW动态加载方式」。
+
+
+三、MinGW/GCC 动态加载方式
+----------------------------------------
+
+如果你用的是MinGW或GCC编译器，不需要.lib文件，
+直接通过LoadLibrary从DLL中加载函数。
+
+步骤1：复制文件
+  只需要两个DLL，不需要.lib和头文件：
+    DeepskinSDK.dll
+    HIDdAPI.dll
+
+步骤2：编写代码
+
+  #include <stdio.h>
+  #include <windows.h>
+
+  // 定义函数指针类型（和SDK头文件中的声明一致）
+  typedef int  (*PFN_init)(void);
+  typedef void (*PFN_release)(void);
+  typedef int  (*PFN_enable)(void);
+  typedef void (*PFN_disable)(void);
+  typedef int  (*PFN_get_gesture)(void*);
+  typedef int  (*PFN_get_diff_matrix)(double*, int);
+  typedef int  (*PFN_get_recent_gestures_json)(int, char*, int);
+  typedef int  (*PFN_is_touching)(void);
+  typedef int  (*PFN_get_matrix_size)(int*, int*);
+  typedef const char* (*PFN_get_last_error)(void);
+
+  // DeepskinGesture结构体定义（和SDK一致）
+  typedef struct {
+      int gesture_type;
+      const char* gesture_name;
+      int start_frame, end_frame, duration_frames;
+      double duration_ms;
+      int force_max, force_avg, force_min, force_peak;
+      double force_std_dev, force_energy;
+      int area_max, area_avg, area_min;
+      double area_std_dev, contact_ratio;
+      // ... 其他字段可按需添加
+  } DeepskinGesture;
+
+  int main() {
+      // 加载DLL
+      HMODULE hDll = LoadLibrary("DeepskinSDK.dll");
+      if (!hDll) {
+          printf("加载DeepskinSDK.dll失败\n");
+          return -1;
+      }
+
+      // 获取函数地址
+      PFN_init           pInit         = (PFN_init)GetProcAddress(hDll, "deepskin_init");
+      PFN_release        pRelease      = (PFN_release)GetProcAddress(hDll, "deepskin_release");
+      PFN_enable         pEnable       = (PFN_enable)GetProcAddress(hDll, "deepskin_enable");
+      PFN_disable        pDisable      = (PFN_disable)GetProcAddress(hDll, "deepskin_disable");
+      PFN_get_gesture    pGetGesture   = (PFN_get_gesture)GetProcAddress(hDll, "deepskin_get_gesture");
+      PFN_get_matrix_size pGetMatrixSize = (PFN_get_matrix_size)GetProcAddress(hDll, "deepskin_get_matrix_size");
+      PFN_get_last_error pGetError     = (PFN_get_last_error)GetProcAddress(hDll, "deepskin_get_last_error");
+
+      // 检查函数是否获取成功
+      if (!pInit || !pEnable || !pGetGesture) {
+          printf("获取函数地址失败\n");
+          FreeLibrary(hDll);
+          return -1;
+      }
+
+      // 使用SDK
+      if (pInit() != 0) {
+          printf("初始化失败: %s\n", pGetError());
+          FreeLibrary(hDll);
+          return -1;
+      }
+
+      int tx = 0, rx = 0;
+      pGetMatrixSize(&tx, &rx);
+      printf("传感器: %d x %d\n", tx, rx);
+
+      pEnable();
+      printf("请触控传感器...\n");
+
+      // 循环检测手势
+      while (1) {
+          DeepskinGesture gesture;
+          if (pGetGesture(&gesture)) {
+              printf("手势: %d (%s)\n", gesture.gesture_type, gesture.gesture_name);
+          }
+          Sleep(50);
+      }
+
+      pDisable();
+      pRelease();
+      FreeLibrary(hDll);
+      return 0;
+  }
+
+步骤3：编译
+
+  在VS Code终端或命令行执行：
+    gcc main.c -o app.exe -lkernel32
+
+  运行：
+    app.exe
+
+  注意：确保DeepskinSDK.dll和HIDdAPI.dll在exe同目录
+
+
+四、最简示例代码（Visual Studio方式）
+----------------------------------------
+
+  #include <stdio.h>
+  #include "deepskin_sensor.h"
+  #pragma comment(lib, "DeepskinSDK.lib")
+
+  int main() {
+      if (deepskin_init() != DEEPSKIN_OK) {
+          printf("初始化失败: %s\n", deepskin_get_last_error());
+          return -1;
+      }
+
+      deepskin_enable();
+
+      while (1) {
+          DeepskinGesture gesture;
+          if (deepskin_get_gesture(&gesture)) {
+              printf("手势: %d (%s)\n",
+                  gesture.gesture_type,
+                  gesture.gesture_name);
+          }
+          Sleep(50);
+      }
+
+      deepskin_disable();
+      deepskin_release();
+      return 0;
+  }
+
+
+五、API 速查
+----------------------------------------
+
+基础控制：
+  deepskin_init()      - 初始化SDK（必须最先调用）
+  deepskin_release()   - 释放SDK（必须最后调用）
+  deepskin_enable()    - 开始采集数据
+  deepskin_disable()   - 停止采集数据
+  deepskin_reset()     - 重置手势状态和历史
+
+数据获取：
+  deepskin_get_diff_matrix(double* out, int len)
+      获取差分矩阵（正值=有压力，0=无触控）
+
+  deepskin_get_gesture(DeepskinGesture* gesture)
+      获取手势事件（返回1=有新手势，0=无）
+
+  deepskin_get_recent_gestures_json(int count, char* out, int buf_size)
+      获取最近N个手势的完整JSON数据
+
+  deepskin_get_current_json(char* out, int buf_size)
+      获取当前触控时的实时数据JSON
+
+  deepskin_get_all_gestures_json(char* out, int buf_size)
+      获取所有历史手势JSON（最多20个）
+
+状态查询：
+  deepskin_is_touching()          - 是否正在触控（返回1或0）
+  deepskin_get_matrix_size(&tx, &rx) - 获取矩阵大小
+  deepskin_get_last_error()       - 获取错误描述字符串
+
+
+六、手势类型
+----------------------------------------
+
+  1 = PalmPress    手掌按压    高力度/大面积 + 持续>1秒
+  2 = Slap         拍打        高力度或大面积（短时间）
+  3 = Stroke       轻抚        垂直矩形 + 水平移动
+  4 = FistSmash    拳头砸击    中力度 + 低扩散 + 短时间
+  5 = FingerGather 手指聚拢    高扩散值（接触面分散）
+  6 = SingleTap    单指轻触    低力度 + 小面积
+
+
+七、常见问题
+----------------------------------------
+
+Q: 提示"找不到DLL"？
+A: 确保 DeepskinSDK.dll 和 HIDdAPI.dll 都在exe同一目录
+
+Q: 提示"找不到deepskin_sensor.h"？
+A: 检查项目属性 → C/C++ → 附加包含目录 是否正确配置
+
+Q: 提示"无法解析的外部符号"？
+A: 检查项目属性 → 链接器 → 附加依赖项 是否添加了DeepskinSDK.lib
+   如果用MinGW，请改用动态加载方式（LoadLibrary）
+
+Q: 提示"不是有效的应用程序"？
+A: 本包为x86版本，必须用Win32平台编译。如需x64版本请使用
+   DeepskinSDK_Distribution_cpp_x64
+
+Q: 手势识别不出来？
+A: 确保完整做一次触控动作（按下→保持→抬起），时间>32ms
+
+Q: 如何查看传感器原始数据？
+A: 运行 test_matrix.exe，会实时显示差分矩阵
+
+Q: 用VS Code + MinGW能直接用.lib吗？
+A: 不能。MinGW不识别MSVC格式的.lib文件，请用动态加载方式
+   （LoadLibrary + GetProcAddress），详见上方「三、MinGW动态加载方式」
+
+
+八、文件说明
+----------------------------------------
+
+bin/
+  DeepskinSDK.dll   - SDK主库（32位）
+  HIDdAPI.dll       - HID设备通信库（32位）
+
+include/
+  deepskin_types.h  - 类型定义（手势结构体、错误码）
+  deepskin_sensor.h - API接口声明
+
+lib/
+  DeepskinSDK.lib   - 链接导入库（仅MSVC可用）
+
+test_gesture/       - 手势检测测试
+test_json/          - JSON输出测试
+test_matrix/        - 矩阵显示测试
+使用说明/           - 详细使用文档和截图

@@ -1,0 +1,189 @@
+================================================================================
+                  DeepskinSDK Python 示例 使用说明
+================================================================================
+
+一、环境要求
+--------------------------------------------------------------------------------
+
+  操作系统：Windows 10/11（64位）
+  Python：  3.7 及以上
+  依赖：    numpy（read_diff_matrix_sdk.py 需要）
+
+  安装 numpy：
+    pip install numpy
+
+
+二、文件说明
+--------------------------------------------------------------------------------
+
+  DeepskinSDK_TestPython/
+  ├── DeepskinSDK.dll            ← SDK主库（64位）
+  ├── HIDdAPI.dll                ← HID设备通信库（64位）
+  ├── read_gesture.py            ← 示例1：手势检测
+  ├── read_gesture_json.py       ← 示例2：手势JSON输出
+  ├── read_diff_matrix_sdk.py    ← 示例3：矩阵实时显示
+  └── 使用说明.txt               ← 本文档
+
+
+三、快速开始
+--------------------------------------------------------------------------------
+
+  1. 确保传感器已通过USB连接到电脑
+  2. 确保 DeepskinSDK.dll 和 HIDdAPI.dll 在同一目录
+  3. 打开终端，进入本目录
+  4. 运行任一示例：
+
+    python read_gesture.py
+    python read_gesture_json.py
+    python read_diff_matrix_sdk.py
+
+  5. 触摸传感器，查看输出
+  6. 按 Ctrl+C 退出
+
+
+四、三个示例说明
+--------------------------------------------------------------------------------
+
+【示例1】read_gesture.py - 手势检测
+
+  功能：检测手势并输出类型编号和基本参数
+  输出格式：
+    #1  type=1  force=1234  area=45  dur=500ms
+
+  手势类型：
+    1=PalmPress    手掌按压
+    2=Slap         拍打
+    3=Stroke       轻抚
+    4=FistSmash    拳头砸击
+    5=FingerGather 手指聚拢
+    6=SingleTap    单指轻触
+
+  适用场景：快速验证手势检测功能是否正常
+
+
+【示例2】read_gesture_json.py - JSON输出
+
+  功能：检测手势并输出完整的JSON数据
+  输出格式：
+    --- Gesture #1 ---
+    {
+        "events": {
+            "action1": {
+                "gesture_type": 1,
+                "gesture_name": "PalmPress",
+                "force": { "max": 1234, "avg": 567, ... },
+                "area": { "max": 45, "avg": 30, ... },
+                "trajectory": { ... },
+                "shape": { ... },
+                ...
+            }
+        }
+    }
+
+  包含数据：力度统计、面积统计、运动轨迹、形状特征、扩散统计等
+  适用场景：需要查看完整手势分析数据，或对接自己的上位机软件
+
+
+【示例3】read_diff_matrix_sdk.py - 矩阵实时显示
+
+  功能：实时显示传感器差分矩阵（触控热力图）
+  输出格式：
+    18行 × 29列 的数值矩阵
+    正值表示有压力，空白表示无触控
+
+  依赖：需要安装 numpy（pip install numpy）
+  适用场景：调试传感器数据、查看触控位置和力度分布
+
+
+五、在自己的项目中使用
+--------------------------------------------------------------------------------
+
+  基本步骤：
+
+  1. 复制 DeepskinSDK.dll 和 HIDdAPI.dll 到你的项目目录
+
+  2. 使用 ctypes 加载 DLL：
+
+     import ctypes
+     import os
+
+     dll_path = os.path.join(os.path.dirname(__file__), "DeepskinSDK.dll")
+     sdk = ctypes.WinDLL(dll_path)
+
+  3. 配置函数签名（参考示例代码中的 API signatures 部分）
+
+  4. 调用 API：
+
+     # 初始化
+     sdk.deepskin_init()
+
+     # 获取矩阵尺寸
+     tx = ctypes.c_int(0)
+     rx = ctypes.c_int(0)
+     sdk.deepskin_get_matrix_size(ctypes.byref(tx), ctypes.byref(rx))
+
+     # 启动采集
+     sdk.deepskin_enable()
+
+     # 获取数据
+     matrix = (ctypes.c_double * (tx.value * rx.value))()
+     sdk.deepskin_get_diff_matrix(matrix, tx.value * rx.value)
+
+     # 获取手势
+     gesture = DeepskinGesture()
+     if sdk.deepskin_get_gesture(ctypes.byref(gesture)):
+         print(f"手势: {gesture.gesture_type}")
+
+     # 获取JSON
+     json_buf = (ctypes.c_char * 32768)()
+     sdk.deepskin_get_recent_gestures_json(1, json_buf, 32768)
+     json_str = json_buf.value.decode("utf-8")
+
+     # 退出
+     sdk.deepskin_disable()
+     sdk.deepskin_release()
+
+
+六、API 速查
+--------------------------------------------------------------------------------
+
+  函数名                              说明
+  ─────────────────────────────────────────────────────────────
+  deepskin_init()                     初始化SDK
+  deepskin_release()                  释放SDK
+  deepskin_enable()                   启动数据采集
+  deepskin_disable()                  停止数据采集
+  deepskin_get_diff_matrix(out, len)  获取差分矩阵
+  deepskin_get_gesture(gesture)       获取手势（返回1=有新手势）
+  deepskin_get_recent_gestures_json(  获取最近N个手势JSON
+      count, out, size)
+  deepskin_get_matrix_size(tx, rx)    获取矩阵尺寸
+  deepskin_get_last_error()           获取错误信息
+
+  返回值：
+    0 = 成功（DEEPSKIN_OK）
+   -1 = 未找到设备
+   -2 = 设备打开失败
+   -3 = 未启动采集
+   -4 = 缓冲区太小
+
+
+七、常见问题
+--------------------------------------------------------------------------------
+
+  Q: 提示找不到 DLL？
+  A: 确保 DeepskinSDK.dll 和 HIDdAPI.dll 都在脚本同目录
+
+  Q: 提示 ModuleNotFoundError: No module named 'numpy'？
+  A: 运行 pip install numpy
+
+  Q: 手势识别不出来？
+  A: 确保完整做一次触控动作（按下→保持→抬起），时间>32ms
+
+  Q: 矩阵显示方向不对？
+  A: 确认使用的是本目录下的 DeepskinSDK.dll（已修复索引问题）
+
+
+================================================================================
+                            文档结束
+================================================================================
