@@ -26,3 +26,25 @@
 - Related files/commands: `src/deepskin_runtime/sdk.py`, `scripts/probe_sdk.py`,
   `artifacts/stage_reports/stage_1_probe.json`, `Get-FileHash`,
   `python scripts\probe_sdk.py --orientation`.
+
+## 2026-08-20 — Recorder confused host poll rate with observed matrix update rate
+
+- Date: 2026-08-20
+- Context: Stage 2 hardware acceptance trial and Gold manifest audit.
+- Symptom: The first accepted trial reported `sampling_rate_observed_hz=185.99`,
+  while replay showed only 156 changed transitions in about 2.984 seconds.
+- Root cause: Metadata divided all host polls by duration instead of counting the
+  first matrix plus changed-matrix transitions, violating frozen decision D-002.
+- Fix: Store changed-matrix rate as `sampling_rate_observed_hz`, store poll rate
+  separately as `host_poll_rate_hz`, and exclude legacy Gold candidates lacking
+  the explicit poll-rate field. Flag trials where the SDK touch flag is always
+  false instead of silently treating that flag as reliable contact evidence.
+- Verification evidence: `trial_000006` replayed as `[553,18,29]` with 156
+  changed transitions; metadata reports 52.61 Hz observed updates and 185.32 Hz
+  host polls. The final acceptance manifest contains only this corrected trial.
+- Future caution: Define every rate by its numerator before publishing it. Do
+  not infer hardware sampling or drop counts from polling, and do not use this
+  device's SDK touch boolean as the sole contact detector.
+- Related files/commands: `src/deepskin_data/recorder.py`,
+  `src/deepskin_data/manifest.py`, `scripts/replay_trial.py`,
+  `python scripts\build_gold_manifest.py`.
