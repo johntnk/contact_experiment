@@ -1,0 +1,66 @@
+{
+  "schema_version": "deepskin-stage1-probe-v1",
+  "created_at": "2026-08-20T16:28:05.072942+08:00",
+  "probe_scope": "host-observed public SDK behavior",
+  "dll_path": "C:\\Users\\Administrator\\Desktop\\Development_Board\\DeepskinSDK_Distribution_cpp_x64\\bin\\DeepskinSDK.dll",
+  "python_bits": 64,
+  "probe": {
+    "matrix": {
+      "tx": 18,
+      "rx": 29,
+      "taxels": 522,
+      "layout": "row-major"
+    },
+    "timing": {
+      "requested_duration_s": 5.0,
+      "observed_duration_s": 5.0,
+      "poll_interval_requested_ms": 5.0,
+      "poll_count": 922,
+      "host_poll_rate_hz": 184.4,
+      "changed_matrix_count": 261,
+      "host_observed_change_rate_hz": 52.2,
+      "duplicate_matrix_count": 661,
+      "duplicate_matrix_ratio": 0.7169197396963124,
+      "poll_intervals_ms": {
+        "count": 921,
+        "min": 0.0,
+        "max": 16.0,
+        "mean": 5.411509229098805,
+        "p50": 0.0,
+        "p95": 16.0,
+        "p99": 16.0
+      },
+      "change_intervals_ms": {
+        "count": 260,
+        "min": 15.0,
+        "max": 62.0,
+        "mean": 19.16923076923077,
+        "p50": 16.0,
+        "p95": 32.0,
+        "p99": 32.0
+      },
+      "hardware_drop_count": null,
+      "hardware_drop_count_reason": "public SDK exposes no hardware timestamp or sequence number"
+    },
+    "signal": {
+      "values": {
+        "count": 481284,
+        "min": -3.0,
+        "max": 2.0,
+        "mean": -0.06054844956408274,
+        "p50": 0.0,
+        "p95": 1.0,
+        "p99": 1.0
+      },
+      "negative_value_count": 85181,
+      "negative_value_ratio": 0.17698697650451709,
+      "touch_true_polls": 0,
+      "touch_true_ratio": 0.0
+    },
+    "current_json": {
+      "attempted": true,
+      "ok": true,
+      "bytes": 2
+    }
+  }
+}

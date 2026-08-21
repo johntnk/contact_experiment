@@ -1,0 +1,43 @@
+{
+  "predicted_label": "STROKE",
+  "expected_label": null,
+  "ranked_scores": [
+    {
+      "label": "STROKE",
+      "score": 6.246769692721451
+    },
+    {
+      "label": "IMPACT",
+      "score": 5.170516422819004
+    },
+    {
+      "label": "PAT",
+      "score": 4.158372253395693
+    },
+    {
+      "label": "POKE",
+      "score": 3.2071034606391495
+    },
+    {
+      "label": "TAP",
+      "score": 2.00520106824595
+    },
+    {
+      "label": "STATIC_TOUCH",
+      "score": 0.7661710014776233
+    },
+    {
+      "label": "RUB",
+      "score": -0.2680992615313167
+    }
+  ],
+  "segment_info": {
+    "found": true,
+    "threshold": 5.0,
+    "start_ms": 860.0,
+    "end_ms": 2157.0,
+    "padded_start_ms": 766.0,
+    "padded_end_ms": 2250.0
+  },
+  "raw_file": "20260821_154915_850346.npz"
+}

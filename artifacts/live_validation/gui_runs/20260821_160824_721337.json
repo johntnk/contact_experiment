@@ -1,0 +1,54 @@
+{
+  "predicted_label": "STROKE",
+  "output_label": "STROKE",
+  "positive_gate": {
+    "accepted": true,
+    "output_label": "STROKE",
+    "reason": "accepted",
+    "distance": 5.086456994081626,
+    "threshold": 6.116138648695966
+  },
+  "expected_label": null,
+  "sensor_orientation": "正常方向 (0°)",
+  "orientation_transform": "original",
+  "raw_matrix_orientation": "device_native",
+  "ranked_scores": [
+    {
+      "label": "STROKE",
+      "score": 6.291166275776162
+    },
+    {
+      "label": "RUB",
+      "score": 5.257856374852255
+    },
+    {
+      "label": "POKE",
+      "score": 4.223471993359904
+    },
+    {
+      "label": "TAP",
+      "score": 3.1668097991234605
+    },
+    {
+      "label": "STATIC_TOUCH",
+      "score": 1.7149961554639432
+    },
+    {
+      "label": "IMPACT",
+      "score": 0.7539402046424379
+    },
+    {
+      "label": "PAT",
+      "score": -0.274239655711319
+    }
+  ],
+  "segment_info": {
+    "found": true,
+    "threshold": 4.0,
+    "start_ms": 516.0,
+    "end_ms": 1578.0,
+    "padded_start_ms": 422.0,
+    "padded_end_ms": 1672.0
+  },
+  "raw_file": "20260821_160824_721337.npz"
+}

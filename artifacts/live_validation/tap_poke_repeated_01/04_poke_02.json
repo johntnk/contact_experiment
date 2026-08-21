@@ -1,0 +1,52 @@
+{
+  "schema_version": "deepskin-live-inference-v1",
+  "recorded_at_utc": "2026-08-21T07:18:11.269497+00:00",
+  "expected_label": "POKE",
+  "predicted_label": "POKE",
+  "expected_match": true,
+  "ranked_decision_scores": [
+    {
+      "label": "POKE",
+      "score": 6.295619860773877
+    },
+    {
+      "label": "TAP",
+      "score": 5.2161130166354805
+    },
+    {
+      "label": "RUB",
+      "score": 4.148820203685042
+    },
+    {
+      "label": "STROKE",
+      "score": 2.884370267140765
+    },
+    {
+      "label": "STATIC_TOUCH",
+      "score": 1.7928431596317054
+    },
+    {
+      "label": "IMPACT",
+      "score": 0.7910995605730665
+    },
+    {
+      "label": "PAT",
+      "score": -0.28968630664779915
+    }
+  ],
+  "model_sha256": "d6c7bce29a1cafad2ccfc30e47b5c7b348fba929888d39c10ed3484d1350d817",
+  "raw_capture_file": "04_poke_02.npz",
+  "raw_capture_sha256": "4e6fcb628e2f6320f7fc688e256713540492619e73f6763d34bf258b06f25a2b",
+  "matrix_shape": [
+    742,
+    18,
+    29
+  ],
+  "frame_count": 742,
+  "duration_ms": 3984.0,
+  "host_poll_rate_hz": 186.2449799196787,
+  "matrix_min": -2.0,
+  "matrix_max": 19.0,
+  "matrix_finite": true,
+  "sdk_touch_true_frames": 0
+}

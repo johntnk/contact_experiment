@@ -1,0 +1,314 @@
+{
+  "policy": "horizontal_vertical",
+  "event_segmentation": true,
+  "augmentation_multiplier": 4,
+  "real_gold_rows": 42,
+  "evaluated_original_rows": 42,
+  "labels": [
+    "IMPACT",
+    "PAT",
+    "POKE",
+    "RUB",
+    "STATIC_TOUCH",
+    "STROKE",
+    "TAP"
+  ],
+  "folds": [
+    {
+      "test_operator": "operator_01",
+      "best_C": 1.0,
+      "best_gamma": "scale",
+      "train_rows_real": 28,
+      "train_rows_augmented": 112,
+      "test_rows": 14,
+      "macro_f1": 0.7333333333333333,
+      "balanced_accuracy": 0.7857142857142857,
+      "accuracy": 0.7857142857142857,
+      "confusion_matrix": [
+        [
+          1,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2
+        ]
+      ]
+    },
+    {
+      "test_operator": "operator_02",
+      "best_C": 1.0,
+      "best_gamma": "scale",
+      "train_rows_real": 28,
+      "train_rows_augmented": 112,
+      "test_rows": 14,
+      "macro_f1": 0.7999999999999999,
+      "balanced_accuracy": 0.8571428571428571,
+      "accuracy": 0.8571428571428571,
+      "confusion_matrix": [
+        [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          1
+        ],
+        [
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2
+        ]
+      ]
+    },
+    {
+      "test_operator": "operator_03",
+      "best_C": 1.0,
+      "best_gamma": "scale",
+      "train_rows_real": 28,
+      "train_rows_augmented": 112,
+      "test_rows": 14,
+      "macro_f1": 0.7333333333333334,
+      "balanced_accuracy": 0.7857142857142857,
+      "accuracy": 0.7857142857142857,
+      "confusion_matrix": [
+        [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          2,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2
+        ]
+      ]
+    }
+  ],
+  "macro_f1": 0.7986997129854273,
+  "balanced_accuracy": 0.8095238095238095,
+  "accuracy": 0.8095238095238095,
+  "confusion_matrix": [
+    [
+      5,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0
+    ],
+    [
+      0,
+      6,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      2,
+      3,
+      0,
+      0,
+      1
+    ],
+    [
+      0,
+      0,
+      1,
+      5,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      6,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      4,
+      2
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      6
+    ]
+  ]
+}
