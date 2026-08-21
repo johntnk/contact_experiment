@@ -26,6 +26,12 @@ order_module = importlib.util.module_from_spec(spec)
 assert spec.loader is not None
 spec.loader.exec_module(order_module)
 
+SESSION_SCRIPT = REPO_ROOT / "scripts" / "record_session.py"
+session_spec = importlib.util.spec_from_file_location("record_session", SESSION_SCRIPT)
+session_module = importlib.util.module_from_spec(session_spec)
+assert session_spec.loader is not None
+session_spec.loader.exec_module(session_module)
+
 
 def arrays() -> dict[str, np.ndarray]:
     return {
@@ -70,6 +76,11 @@ class TrialDataTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "explicit"):
             invalid.validate()
 
+    def test_valid_rejects_label_different_from_instruction(self):
+        invalid = metadata().__class__(**{**metadata().to_dict(), "verified_label": "TAP"})
+        with self.assertRaisesRegex(ValueError, "match instruction_label"):
+            invalid.validate()
+
     def test_atomic_write_validate_and_refuse_overwrite(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -96,6 +107,31 @@ class TrialDataTests(unittest.TestCase):
             with output.open(encoding="utf-8", newline="") as handle:
                 rows = list(csv.DictReader(handle))
             self.assertEqual(rows[0]["verified_label"], "STROKE")
+
+    def test_recollection_plan_excludes_old_valid_attempt(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "raw"
+            output = Path(directory) / "gold.csv"
+            plan = Path(directory) / "plan.csv"
+            first = metadata()
+            first = first.__class__(
+                **{**first.to_dict(), "planned_trial_id": "trial_000001", "attempt_no": 1}
+            )
+            write_trial_atomic(root, first, arrays(), [])
+            plan.write_text(
+                "operator_id,session_id,planned_trial_id,minimum_attempt_no,reason\n"
+                "operator_01,session_01,trial_000001,2,pulse protocol misunderstood\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(build_gold_manifest(root, output, plan), 0)
+            second = first.__class__(
+                **{**first.to_dict(), "trial_id": "trial_000001_attempt_02", "attempt_no": 2}
+            )
+            write_trial_atomic(root, second, arrays(), [])
+            self.assertEqual(build_gold_manifest(root, output, plan), 1)
+            with output.open(encoding="utf-8", newline="") as handle:
+                rows = list(csv.DictReader(handle))
+            self.assertEqual(rows[0]["trial_id"], "trial_000001_attempt_02")
 
     def test_trial_json_is_plain_and_round_trippable(self):
         payload = metadata().to_dict()
@@ -125,6 +161,31 @@ class TrialDataTests(unittest.TestCase):
             self.assertFalse(order_module.has_long_run(labels))
             with self.assertRaises(FileExistsError):
                 order_module.write_order("operator_01", "session_01", 20260820, schedule, first)
+
+    def test_session_resume_uses_new_attempt_and_skips_completed_gold(self):
+        redo = metadata("REDO")
+        redo = redo.__class__(
+            **{
+                **redo.to_dict(),
+                "planned_trial_id": "trial_000001",
+                "attempt_no": 1,
+            }
+        )
+        self.assertFalse(session_module.completed_gold([redo]))
+        self.assertEqual(
+            session_module.next_attempt("trial_000001", [redo]),
+            ("trial_000001_attempt_02", 2),
+        )
+        valid = metadata()
+        valid = valid.__class__(
+            **{
+                **valid.to_dict(),
+                "planned_trial_id": "trial_000001",
+                "attempt_no": 2,
+            }
+        )
+        self.assertTrue(session_module.completed_gold([redo, valid]))
+        self.assertFalse(session_module.completed_gold([redo, valid], minimum_attempt_no=3))
 
 
 if __name__ == "__main__":

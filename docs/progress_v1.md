@@ -33,6 +33,11 @@
   - [x] 9 个 session order，共 315 条计划记录
   - [x] 单个真实硬件 trial 验收
 - [ ] 阶段 3：采集 315 个 Gold 事件
+  - [x] operator_01 / session_01：35/35，pulse 重采完成
+  - [x] operator_01 / session_02：35/35，pulse 重采完成
+  - [x] operator_01 / session_03：35/35，pulse 重采完成
+  - [x] operator_02：105/105（三个 session 均通过）
+  - [ ] operator_03：35/105（session_01 已通过）
 - [ ] 阶段 4：CoST 导入、映射与暂定过滤
 - [ ] 阶段 5：预处理、切分和 F0/F1 特征
 - [ ] 阶段 6：Deepskin 目标域基线
@@ -43,8 +48,8 @@
 
 ## 当前阻塞
 
-无阶段 2 阻塞。Recorder 已完成真实硬件验收。SDK touch flag 在实际触摸中始终为假，已作为质量标记记录；后续事件切分不能仅依赖该标志，须使用相对基线的矩阵信号。
+pulse_count 协议理解错误已完成修复，39 个受影响记录已全部替换并通过门控，旧协议原始目录已清理。operator_01 和 operator_02 均已完成 105 个 Gold，共 210 个。SDK touch flag 仍始终为假，已作为质量标记记录。
 
 ## 下一步
 
-进入阶段 3：按 9 个固定 session order 采集 315 个三操作者先导 Gold 事件。
+间隔并重新初始化设备后采集 operator_03/session_02；当前合格进度 245/315。

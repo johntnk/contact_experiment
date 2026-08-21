@@ -1,0 +1,29 @@
+{
+  "schema_version": "deepskin-positive-gate-calibration-v1",
+  "quantile": 0.7,
+  "feature_count": 51,
+  "operators": [
+    "operator_01",
+    "operator_02",
+    "operator_03"
+  ],
+  "metrics": {
+    "known_trials": 315,
+    "known_coverage": 0.7936507936507936,
+    "selective_precision": 0.888,
+    "correct_target_yield": 0.7047619047619048,
+    "baseline_accuracy": 0.8603174603174604,
+    "accepted_incorrect": 28,
+    "rejected_known": 65
+  },
+  "final_thresholds": {
+    "IMPACT": 4.65601315190075,
+    "PAT": 4.94364793540976,
+    "POKE": 3.8600262602009616,
+    "RUB": 3.2865880930946485,
+    "STATIC_TOUCH": 3.0281033458500652,
+    "STROKE": 5.142984479899145,
+    "TAP": 4.3818204413862825
+  },
+  "limitation": "No unknown-class data were used; unknown rejection rate is not estimated."
+}

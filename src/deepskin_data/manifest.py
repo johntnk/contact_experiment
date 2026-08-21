@@ -8,6 +8,7 @@ import tempfile
 from pathlib import Path
 
 from .recorder import summarize_trial, validate_trial_directory
+from .recollection import load_recollection_plan
 
 
 FIELDS = (
@@ -15,6 +16,8 @@ FIELDS = (
     "operator_id",
     "session_id",
     "trial_id",
+    "planned_trial_id",
+    "attempt_no",
     "verified_label",
     "trial_status",
     "intensity_instruction",
@@ -28,15 +31,21 @@ FIELDS = (
 )
 
 
-def build_gold_manifest(raw_root: Path, output: Path) -> int:
+def build_gold_manifest(raw_root: Path, output: Path, recollection_plan: Path | None = None) -> int:
+    minimum_attempts = load_recollection_plan(recollection_plan)
     rows: list[dict[str, object]] = []
     for metadata_path in sorted(raw_root.glob("*/*/*/metadata.json")):
         trial_path = metadata_path.parent
         metadata = validate_trial_directory(trial_path)
+        planned_trial_id = metadata.planned_trial_id or metadata.trial_id
+        minimum_attempt = minimum_attempts.get(
+            (metadata.operator_id, metadata.session_id, planned_trial_id), 1
+        )
         if (
             metadata.trial_status != "VALID"
             or metadata.label_quality != "GOLD"
             or metadata.host_poll_rate_hz is None
+            or metadata.attempt_no < minimum_attempt
         ):
             continue
         summary = summarize_trial(trial_path)
@@ -50,6 +59,8 @@ def build_gold_manifest(raw_root: Path, output: Path) -> int:
                 "operator_id": metadata.operator_id,
                 "session_id": metadata.session_id,
                 "trial_id": metadata.trial_id,
+                "planned_trial_id": planned_trial_id,
+                "attempt_no": metadata.attempt_no,
                 "verified_label": metadata.verified_label,
                 "trial_status": metadata.trial_status,
                 "intensity_instruction": metadata.intensity_instruction or "",

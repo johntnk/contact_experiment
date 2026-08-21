@@ -62,6 +62,9 @@ def confirm_label(instruction_label: str) -> tuple[str, str | None, str | None, 
         if verified not in GESTURE_LABELS:
             print("无效标签，请重新输入状态和标签。")
             continue
+        if verified != instruction_label:
+            print("验证标签与指令不一致；该执行不能标为 VALID，请选择 REDO 或 UNCERTAIN。")
+            continue
         confirmation = input(f"输入 YES 确认 {instruction_label} -> {verified}: ").strip().upper()
         if confirmation == "YES":
             return "VALID", verified, "CONTROLLED_CONFIRMED", "GOLD"

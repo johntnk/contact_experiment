@@ -9,6 +9,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_RECOLLECTION_PLAN = REPO_ROOT / "protocol" / "recollection_plans" / "gold_corrections_v2.csv"
 SRC_DIR = REPO_ROOT / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
@@ -24,8 +25,14 @@ def main() -> int:
         type=Path,
         default=REPO_ROOT / "data" / "processed" / "manifests" / "gold_manifest.csv",
     )
+    parser.add_argument(
+        "--recollection-plan",
+        type=Path,
+        default=DEFAULT_RECOLLECTION_PLAN,
+        help="minimum-attempt overrides for protocol-driven replacement trials",
+    )
     args = parser.parse_args()
-    count = build_gold_manifest(args.raw_root, args.output)
+    count = build_gold_manifest(args.raw_root, args.output, args.recollection_plan)
     print(f"Wrote {count} validated Gold trials to {args.output.resolve()}")
     return 0
 

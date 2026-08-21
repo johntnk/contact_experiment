@@ -6,6 +6,13 @@ Stage 2 records one immutable 18x29 trial at a time. The seven allowed labels ar
 `TAP`, `POKE`, `STATIC_TOUCH`, `STROKE`, `RUB`, `PAT`, and `IMPACT`.
 `NO_CONTACT` and `UNKNOWN` are not training classes.
 
+### TAP versus POKE operational boundary
+
+- `TAP`: one fast contact, target active duration approximately 100–300 ms, followed by immediate full lift-off; do not deliberately press inward or dwell.
+- `POKE`: one fingertip inward press with a short dwell, target active duration approximately 500–1500 ms, followed by full lift-off; do not perform it as a quick light tap.
+- Intensity remains an independent instruction and must not be used alone to decide TAP versus POKE.
+- Duration is a protocol aid and audit flag, not an automatic ground-truth relabeling rule.
+
 ## Session preparation
 
 1. Use a new `session_id`, restart the acquisition process, and collect a fresh
@@ -23,6 +30,14 @@ The generator includes each class five times and rejects runs longer than two
 identical labels. Existing order files are never overwritten.
 
 ## Recording one trial
+
+### pulse_count operational rule
+
+- `pulse_count=N` means N separated short contacts.
+- Fully lift after every contact before making the next one.
+- Place the next contact nearby, approximately 1–2 cm from the previous position, rather than exactly overlapping it.
+- A pulse is not a sustained press, repeated pressure without lift-off, or a sliding motion; mark those executions `REDO`.
+- When pulse_count is shown, the operator must restate this rule before starting the countdown.
 
 Use the row in the generated order as the instruction source. Example:
 
@@ -47,6 +62,21 @@ After recording, an operator must select exactly one status:
   remains null.
 
 The instruction is never copied automatically into the verified label.
+For a controlled `VALID` trial, the explicitly entered verified label must match
+the instruction label. If the performed gesture belongs to another class, mark
+the attempt `REDO` or `UNCERTAIN`; do not relabel it as valid.
+
+For a full or resumed 35-trial session, use:
+
+```powershell
+python scripts\record_session.py `
+  --operator-id operator_01 `
+  --session-id session_01
+```
+
+The session runner initializes the device once, follows the frozen order, skips
+already completed Gold trials, and writes retries as `_attempt_02`, etc. Use
+`--max-new-trials N` for a safe partial collection block.
 
 ## Trial files and safety
 

@@ -50,12 +50,18 @@ class TrialMetadata:
     timestamp_source: str = "host_monotonic"
     frame_id_source: str = "host_generated"
     host_poll_rate_hz: float | None = None
+    planned_trial_id: str | None = None
+    attempt_no: int = 1
 
     def validate(self) -> None:
         for field_name in ("operator_id", "session_id", "trial_id"):
             value = getattr(self, field_name)
             if not _SAFE_ID.fullmatch(value):
                 raise ValueError(f"invalid {field_name}: {value!r}")
+        if self.planned_trial_id is not None and not _SAFE_ID.fullmatch(self.planned_trial_id):
+            raise ValueError(f"invalid planned_trial_id: {self.planned_trial_id!r}")
+        if self.attempt_no <= 0:
+            raise ValueError("attempt_no must be positive")
         if self.schema_version != SCHEMA_VERSION:
             raise ValueError(f"unsupported schema_version: {self.schema_version}")
         if self.instruction_label not in GESTURE_LABELS:
@@ -65,6 +71,8 @@ class TrialMetadata:
         if self.trial_status == "VALID":
             if self.verified_label not in GESTURE_LABELS:
                 raise ValueError("VALID requires an explicit seven-class verified_label")
+            if self.verified_label != self.instruction_label:
+                raise ValueError("VALID requires verified_label to match instruction_label")
             if self.label_source != "CONTROLLED_CONFIRMED" or self.label_quality != "GOLD":
                 raise ValueError("VALID requires CONTROLLED_CONFIRMED/GOLD labels")
         elif self.verified_label is not None:
