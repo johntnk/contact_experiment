@@ -1,0 +1,10 @@
+experiment,variant,seed,source_rows,feature_space,macro_f1,balanced_accuracy,min_class_f1,decision
+E0,target_only_f1,deterministic,0,F1,0.853501,0.853968,0.731183,selected
+E1,filtered_cost_source_only,deterministic,3427,F0_common,0.117168,0.184127,,diagnostic_only
+E2,filtered_cost_joint_rbf_svm,20260821,3427,F0_common,0.827378,0.828571,0.767442,rejected
+E2,filtered_cost_joint_rbf_svm,20260822,3427,F0_common,0.827378,0.828571,0.767442,rejected
+E2,filtered_cost_joint_rbf_svm,20260823,3427,F0_common,0.827378,0.828571,0.767442,rejected
+E3,filtered_cost_score_assisted,deterministic,3427,F1_plus_7_source_scores,0.853252,0.853968,0.755556,rejected_no_mean_gain
+E4,filtered_cost_feature_selected,20260821,3427,F0_common,0.822062,0.822222,0.747253,rejected
+E4,filtered_cost_feature_selected,20260822,3427,F0_common,0.822057,0.822222,0.733333,rejected
+E4,filtered_cost_feature_selected,20260823,3427,F0_common,0.799965,0.800000,0.711111,rejected

@@ -84,11 +84,92 @@ def extract_features(matrix: np.ndarray, timestamps_ms: np.ndarray) -> tuple[np.
     return result, names
 
 
-def segment_touch_event(matrix: np.ndarray, timestamps_ms: np.ndarray, gap_ms: float = 100.0, pad_ms: float = 100.0):
+def extract_common_features(matrix: np.ndarray, timestamps_ms: np.ndarray) -> tuple[np.ndarray, list[str]]:
+    """Extract sensor-shape-independent F0 features with normalized pressure/time/space."""
+    raw = np.asarray(matrix, dtype=np.float64)
+    timestamps_ms = np.asarray(timestamps_ms, dtype=np.float64)
+    if raw.ndim != 3 or raw.shape[0] < 2 or len(timestamps_ms) != raw.shape[0]:
+        raise ValueError("common features require matrix [T,H,W], T>=2, and matching timestamps")
+    baseline_frames = max(1, min(raw.shape[0] // 10, int(np.searchsorted(timestamps_ms, 200.0, side="right"))))
+    baseline = np.median(raw[:baseline_frames], axis=0)
+    corrected = np.maximum(raw - baseline, 0.0)
+    positive = corrected[corrected > 0]
+    scale = float(np.percentile(positive, 99)) if positive.size else 1.0
+    x = np.clip(corrected / max(scale, 1e-9), 0.0, 1.0)
+    total = x.sum(axis=(1, 2))
+    active = x > 0.05
+    area = active.mean(axis=(1, 2))
+    rows, cols = x.shape[1:]
+    yy, xx = np.mgrid[0:rows, 0:cols]
+    denom = total + 1e-12
+    cx = (x * xx).sum(axis=(1, 2)) / denom / max(cols - 1, 1)
+    cy = (x * yy).sum(axis=(1, 2)) / denom / max(rows - 1, 1)
+    dx, dy = np.diff(cx), np.diff(cy)
+    step = np.hypot(dx, dy)
+    duration_s = max(float(timestamps_ms[-1] - timestamps_ms[0]) / 1000.0, 1e-9)
+    values, names = [], []
+
+    def add(name, value):
+        names.append(name); values.append(float(value))
+
+    for prefix, series in (("total_pressure_norm", total), ("contact_area_ratio", area)):
+        for suffix, value in (("mean", series.mean()), ("std", series.std()), ("max", series.max()),
+                              ("p50", np.percentile(series, 50)), ("p90", np.percentile(series, 90)),
+                              ("p99", np.percentile(series, 99))):
+            add(f"{prefix}_{suffix}", value)
+    add("duration_s", duration_s)
+    add("pressure_impulse_norm_s", np.trapezoid(total, timestamps_ms / 1000.0))
+    add("centroid_x_start_norm", cx[0]); add("centroid_y_start_norm", cy[0])
+    add("centroid_x_end_norm", cx[-1]); add("centroid_y_end_norm", cy[-1])
+    add("centroid_displacement_norm", np.hypot(cx[-1] - cx[0], cy[-1] - cy[0]))
+    add("trajectory_length_norm", step.sum()); add("movement_mean_norm", step.mean() if step.size else 0)
+    add("movement_std_norm", step.std() if step.size else 0)
+    add("sum_abs_dx_norm", np.abs(dx).sum()); add("sum_abs_dy_norm", np.abs(dy).sum())
+    add("trajectory_straightness", np.hypot(cx[-1] - cx[0], cy[-1] - cy[0]) / max(step.sum(), 1e-9))
+    add("mean_abs_temporal_derivative_per_s", np.abs(np.diff(total)).mean() * (raw.shape[0] - 1) / duration_s)
+    row_edges = np.linspace(0, rows, 5, dtype=int)
+    col_edges = np.linspace(0, cols, 5, dtype=int)
+    for region_row in range(4):
+        for region_col in range(4):
+            block = x[:, row_edges[region_row]:row_edges[region_row + 1], col_edges[region_col]:col_edges[region_col + 1]]
+            prefix = f"region_r{region_row}_c{region_col}"
+            add(f"{prefix}_mean_pressure_norm", block.mean())
+            add(f"{prefix}_max_pressure_norm", block.max())
+            add(f"{prefix}_active_ratio", (block > 0.05).mean())
+    return np.nan_to_num(np.asarray(values), nan=0.0, posinf=0.0, neginf=0.0), names
+
+
+def domain_class_sample_weights(labels: np.ndarray, domains: np.ndarray, source_alpha: float) -> np.ndarray:
+    """Balance classes within each domain and set source/target total-weight ratio to alpha."""
+    labels = np.asarray(labels)
+    domains = np.asarray(domains)
+    if labels.ndim != 1 or domains.shape != labels.shape or labels.size == 0:
+        raise ValueError("labels and domains must be matching non-empty 1D arrays")
+    if source_alpha < 0:
+        raise ValueError("source_alpha must be non-negative")
+    unexpected = set(domains) - {"target", "source"}
+    if unexpected or "target" not in set(domains):
+        raise ValueError(f"domains must contain target and optionally source, got {sorted(set(domains))}")
+    target_count = int(np.sum(domains == "target"))
+    weights = np.zeros(labels.size, dtype=float)
+    for domain, relative_total in (("target", 1.0), ("source", source_alpha)):
+        mask = domains == domain
+        if not np.any(mask):
+            continue
+        domain_labels = labels[mask]
+        classes, counts = np.unique(domain_labels, return_counts=True)
+        class_total = relative_total * target_count / len(classes)
+        for label, count in zip(classes, counts):
+            weights[mask & (labels == label)] = class_total / count
+    return weights
+
+
+def segment_touch_event(matrix: np.ndarray, timestamps_ms: np.ndarray, gap_ms: float = 100.0,
+                        pad_ms: float = 100.0, baseline_window_ms: float = 200.0):
     """Return the padded longest active run using a baseline-relative peak threshold."""
     timestamps_ms = np.asarray(timestamps_ms, dtype=float)
     peak = np.maximum(np.asarray(matrix, dtype=float), 0).max(axis=(1, 2))
-    baseline = peak[timestamps_ms <= min(200.0, float(timestamps_ms[-1]))]
+    baseline = peak[timestamps_ms <= min(float(baseline_window_ms), float(timestamps_ms[-1]))]
     threshold = max(3.0, float(np.median(baseline)) + 2.0)
     active = peak >= threshold
     true_indices = np.flatnonzero(active)

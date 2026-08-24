@@ -1,0 +1,10 @@
+experiment,variant,seed,feature_space,macro_f1,balanced_accuracy,min_class_f1,operator_fold_variance,decision
+E0,target_only_f1,deterministic,F1,0.853501,0.853968,0.731183,0.00286783,release_fallback
+E1,cost_source_only,deterministic,F0_common,0.103583,0.174603,,0.00034219,diagnostic_only
+E2,cost_joint_rbf_svm,20260821,F0_common,0.846762,0.847619,0.776471,0.00012089,rejected_fold_gate
+E2,cost_joint_rbf_svm,20260822,F0_common,0.846762,0.847619,0.776471,0.00012089,rejected_fold_gate
+E2,cost_joint_rbf_svm,20260823,F0_common,0.846762,0.847619,0.776471,0.00012089,rejected_fold_gate
+E3,cost_score_assisted,deterministic,F1_plus_7_source_scores,0.865621,0.866667,0.786517,0.00081249,performance_winner_pending_filter_audit
+E4,cost_feature_selected,20260821,F0_common,0.825304,0.825397,0.741573,0.00102256,rejected
+E4,cost_feature_selected,20260822,F0_common,0.816074,0.815873,0.719101,0.00103694,rejected
+E4,cost_feature_selected,20260823,F0_common,0.822359,0.822222,0.727273,0.00096074,rejected

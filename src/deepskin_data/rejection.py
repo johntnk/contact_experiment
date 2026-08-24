@@ -20,11 +20,15 @@ def apply_positive_gate(
     predicted_label: str,
     gate: dict,
     event_found: bool = True,
+    threshold_scale: float = 1.0,
 ) -> dict:
+    if threshold_scale <= 0 or not np.isfinite(threshold_scale):
+        raise ValueError("threshold_scale must be a finite positive number")
     if not event_found:
         return {"accepted": False, "output_label": "UNKNOWN", "reason": "no_touch_event", "distance": None, "threshold": None}
     distance = nearest_class_distance(scaled_feature, gate["references"], predicted_label)
-    threshold = float(gate["thresholds"][predicted_label])
+    base_threshold = float(gate["thresholds"][predicted_label])
+    threshold = base_threshold * float(threshold_scale)
     accepted = bool(np.isfinite(distance) and distance <= threshold)
     return {
         "accepted": accepted,
@@ -32,4 +36,6 @@ def apply_positive_gate(
         "reason": "accepted" if accepted else "outside_positive_region",
         "distance": distance,
         "threshold": threshold,
+        "base_threshold": base_threshold,
+        "threshold_scale": float(threshold_scale),
     }

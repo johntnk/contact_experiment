@@ -1,0 +1,26 @@
+{
+  "filter_version": "cost-compatibility-filter-v1",
+  "filter_config_sha256": "66589c30d657eebeeb1d29db212148606e1f8693d998d97bf0523398929ef757",
+  "input_rows": 4460,
+  "kept_rows": 3427,
+  "filtered_rows": 1033,
+  "before": {
+    "IMPACT": 1116,
+    "PAT": 557,
+    "POKE": 558,
+    "RUB": 557,
+    "STATIC_TOUCH": 558,
+    "STROKE": 556,
+    "TAP": 558
+  },
+  "after": {
+    "IMPACT": 1116,
+    "PAT": 262,
+    "POKE": 558,
+    "RUB": 430,
+    "STATIC_TOUCH": 558,
+    "STROKE": 211,
+    "TAP": 292
+  },
+  "rules_frozen_without_deepskin_outcomes": true
+}

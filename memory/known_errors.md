@@ -98,3 +98,36 @@
 - Verification evidence: the original suite contains seven JSON files and zero NPZ files, reproducing the diagnostic gap. After the patch, `tap_poke_diagnostic_01_tap.json` and its same-stem NPZ were both created; recorded and computed NPZ SHA-256 values match, arrays are finite `[740,18,29]`, and all four required array keys are present. Syntax checks and 15 tests passed.
 - Future caution: all live validation used for segmentation or error analysis must preserve immutable raw arrays; summary-only files are adequate for plumbing checks but not model diagnosis.
 - Related files/commands: `scripts/recognize_live.py`, `artifacts/live_validation/seven_class_smoke_01/`, `python scripts/recognize_live.py --expected-label ... --output ...`
+
+## 2026-08-21 — continuous GUI crashed on an event without a valid touch segment
+
+- Date: 2026-08-21
+- Context: continuous Deepskin GUI displaying a completed event rejected as `no_touch_event`.
+- Symptom: Tkinter callback raised `TypeError: unsupported format string passed to NoneType.__format__` and stopped updating results.
+- Root cause: `_show_result` formatted optional gate values with `:.2f`; `apply_positive_gate` intentionally returns `None` for distance and threshold when event segmentation finds no valid touch.
+- Fix: added a shared optional-metric formatter, rendered missing metrics as `—`, and added a specific ignored-event explanation for `no_touch_event`.
+- Verification evidence: focused nullable-metric regression passed; Python compilation passed; full suite passed 26/26.
+- Future caution: treat diagnostic result fields as nullable at every UI/output boundary and test rejection/error payloads, not only accepted predictions.
+- Related files/commands: `scripts/stream_recognize_gui.py`, `tests/test_stream_gui.py`, `python -m unittest tests.test_stream_gui -v`, `python -m unittest discover -s tests -q`.
+
+## 2026-08-21 — continuous PAT episodes were reduced to one IMPACT-like contact
+
+- Date: 2026-08-21
+- Context: continuous social-touch recognition after increasing the episode end hold for PAT.
+- Symptom: an operator's 2–4-contact PAT repeatedly appeared as IMPACT in the GUI.
+- Root cause: `ContactEventDetector` preserved the complete episode, but `classify_event` subsequently called longest-run segmentation, so repeated-contact evidence was unavailable to the final label decision.
+- Fix: count micro-contacts on the complete episode before segmentation and apply the protocol's repeated-impulse PAT rule only to an IMPACT candidate with 2–4 separated, non-trivial contacts; expose the correction in the GUI.
+- Verification evidence: focused regression passed; full suite passed 27/27; 315-row full-fit Gold replay fired zero corrections and changed no stored IMPACT event.
+- Future caution: episode-level gesture semantics must be computed before any operation that selects a single micro-contact. Treat full-fit replay only as a safety check, not a generalization score.
+- Related files/commands: `src/deepskin_data/streaming.py`, `scripts/stream_recognize.py`, `scripts/stream_recognize_gui.py`, `tests/test_training.py`, `artifacts/stage_reports/stage_22_pat_episode_runtime_fix.md`.
+
+## 2026-08-21 — PAT episode correction was suppressed by the wrong gate reference
+
+- Date: 2026-08-21
+- Context: first live attempt after adding IMPACT-to-PAT episode correction.
+- Symptom: PAT stopped producing a recognized result.
+- Root cause: after relabeling an IMPACT candidate as PAT, the code compared its single-contact feature vector with PAT gate references; additionally, the streaming segmenter's 200 ms baseline window could include the long first contact despite only 150 ms pre-roll, producing `no_touch_event`.
+- Fix: gate the original IMPACT model evidence before exposing the episode-corrected PAT label, and use a 75 ms baseline window only for streaming events while preserving the 200 ms offline-training default.
+- Verification evidence: two focused regressions passed; syntax checks passed; full suite passed 28/28.
+- Future caution: semantic post-processing must not silently change the statistical reference used to validate upstream evidence. A streaming baseline window must fit completely inside guaranteed idle pre-roll.
+- Related files/commands: `scripts/stream_recognize.py`, `src/deepskin_data/training.py`, `tests/test_training.py`, `python -m unittest discover -s tests -q`.

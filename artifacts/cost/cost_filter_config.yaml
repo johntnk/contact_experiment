@@ -1,0 +1,35 @@
+{
+  "filter_version": "cost-compatibility-filter-v1",
+  "metric_version": "cost-compatibility-v1",
+  "sampling_hz": 135.0,
+  "threshold_source": "CoST-only distributions plus frozen action definitions; no Deepskin outcomes used",
+  "metric_algorithm": {
+    "pressure_normalization": "per-capture p95 total pressure",
+    "active_threshold": 0.15,
+    "minimum_active_run_ms": 22,
+    "maximum_bridged_gap_ms": 37,
+    "contact_taxel_threshold_fraction_of_p95": 0.05,
+    "trajectory_smoothing_ms": 37,
+    "direction_component_floor": "max(0.002, median absolute major-axis delta)"
+  },
+  "rules": {
+    "tap": {
+      "pulse_count": {"eq": 1}
+    },
+    "pat": {
+      "pulse_count": {"min": 2},
+      "contact_area_ratio": {"min": 0.3125}
+    },
+    "stroke": {
+      "pulse_count": {"eq": 1},
+      "complete_release_count": {"eq": 0},
+      "trajectory_reversal_count": {"max": 5},
+      "trajectory_straightness": {"min": 0.06147152317962772}
+    },
+    "rub": {
+      "pulse_count": {"eq": 1},
+      "complete_release_count": {"eq": 0},
+      "trajectory_reversal_count": {"min": 3}
+    }
+  }
+}

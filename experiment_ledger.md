@@ -1,5 +1,121 @@
 # Experiment Ledger
 
+## Stage 19 / final target-only package — completed and audited
+
+- Date: 2026-08-21
+- Branch: `stage-3-gold-collection`
+- Starting commit: `5b6356de871de1f0e36c3a52212f36818cdd2461`
+- Config: all 315 Gold; segmented F1; no augmentation; RBF-SVM C10 gamma scale; recipe `target_only`
+- Commands: packaging smoke, 22-test suite, smoke checksum audit/deletion, full package training, package/checksum/schema/balance audit, real-trial replay
+- Artifact: `models/deepskin_social_touch_v3_target_only/` and `artifacts/stage_reports/stage_19_final_target_only_package.md`
+- Performance claim: strict LOPO Macro F1 0.8535 and balanced accuracy 0.8540; full-data fit produces no new test score
+- Audit: 315 rows, 45/class, 105/operator, 35/operator-session; 51 features; seven classes; checksums pass; real RUB trial replayed as RUB
+- Compatibility: final model SHA-256 exactly equals current v2 model; current q0.80 gate remains compatible; runtime not switched
+- Status: final classifier package complete; proceed to runtime/output protocol and delivery audit
+
+## Stage 18 / filtered E1–E4 rerun — target-only selected
+
+- Date: 2026-08-21
+- Branch: `stage-3-gold-collection`
+- Starting commit: `5b6356de871de1f0e36c3a52212f36818cdd2461`
+- Config: 3,427 CoST captures; filter SHA-256 `66589c30d657eebeeb1d29db212148606e1f8693d998d97bf0523398929ef757`; non-overwriting v2 outputs
+- Commands: four pipeline smokes, verified smoke deletion, formal E1/E2/E3/E4 reruns, result audit, and 22-test suite
+- Artifacts: four `artifacts/evaluation/*_v2/` directories, `cost_transfer_results_v2.csv`, `cost_transfer_decision_v2.md`, and stage 18 report
+- Metrics: E1 CoST internal 0.7422 and Deepskin 0.1172; E2 RBF 0.8274; E3 0.8533 versus E0/F1 0.8535; E4 0.8000–0.8221
+- Audit: all v2 configs carry the frozen filter hash; complete predictions; E3 bootstrap positive probability about 0.5; no transfer candidate passes
+- Status: final recipe frozen as `target_only`; proceed to full-data target-only model package and reproducibility audit
+
+## Stage 17 / CoST compatibility filter — completed and frozen
+
+- Date: 2026-08-21
+- Branch: `stage-3-gold-collection`
+- Starting commit: `5b6356de871de1f0e36c3a52212f36818cdd2461`
+- Config: `cost-compatibility-filter-v1`; SHA-256 `66589c30d657eebeeb1d29db212148606e1f8693d998d97bf0523398929ef757`
+- Threshold source: CoST-only distributions and frozen action definitions; no Deepskin outcomes used
+- Commands: metric extraction smoke, 21-test suite, full 4,460-capture metric scan, filter smoke, 22-test suite, formal filter application
+- Artifacts: compatibility metrics/summary, frozen config, decisions, report/counts, filtered F0 features, and `stage_17_cost_compatibility_filter.md`
+- Counts: 4,460 mapped input; 3,427 kept; 1,033 `FILTERED_AMBIGUOUS`; all seven labels retained
+- Status: missing filter provenance gap closed; next step is non-overwriting E1–E4 v2 rerun with filter version/hash embedded
+
+## Stage 16 / E0–E4 transfer audit — E3 provisional winner, release blocked by filter provenance
+
+- Date: 2026-08-21
+- Branch: `stage-3-gold-collection`
+- Starting commit: `5b6356de871de1f0e36c3a52212f36818cdd2461`
+- Inputs: completed E1–E4 metrics and predictions plus matched target-only baselines
+- Artifacts: `artifacts/evaluation/cost_transfer_results.csv`, `cost_domain_shift_report.md`, `cost_transfer_decision.md`, and `artifacts/stage_reports/stage_16_cost_transfer_audit.md`
+- Performance decision: E3 wins at Macro F1 0.8656 versus matched E0 0.8535; two folds improve; balanced accuracy +0.0127; worst class delta -0.0307
+- Uncertainty: paired bootstrap favors E3 with probability 0.801–0.819 but 95% intervals include zero
+- Protocol audit: capture-level compatibility filtering, `cost_filter_config.yaml`, and its hash are absent; current 4,460 source captures are mapped only
+- Status: E3 retained as provisional performance candidate; runtime remains target-only; next step is to freeze and apply the missing CoST compatibility filter before rerunning E1–E4
+
+## Stage 15 / plan E4 CoST-informed feature selection — completed, rejected
+
+- Date: 2026-08-21
+- Branch: `stage-3-gold-collection`
+- Starting commit: `5b6356de871de1f0e36c3a52212f36818cdd2461`
+- Config: CoST grouped permutation importance; F0 subset sizes 16/32/48/74; target-only nested RBF-SVM; seeds 20260821/22/23
+- Split: source ranking uses only CoST; subset/C/gamma selection uses only the two outer-training Deepskin operators
+- Commands: syntax check, 20-test suite, reduced smoke, verified smoke deletion, full `python scripts/run_cost_feature_selected.py`
+- Artifacts: `artifacts/evaluation/cost_feature_selected_v1/` and `artifacts/stage_reports/stage_15_cost_e4_feature_selected.md`
+- Metrics: baseline Macro F1 0.8390; selected 0.8253/0.8161/0.8224, deltas -0.0137/-0.0230/-0.0167
+- Audit: operator_02/03 retained all 74 features; operator_01 reduction harmed every seed; balanced accuracy and some class gates failed; bootstrap predominantly negative
+- Status: E4 rejected; proceed to complete transfer-candidate audit with E3 as the only surviving CoST-assisted candidate
+
+## Stage 14 / plan E3 CoST score assistance — completed, retained as candidate
+
+- Date: 2026-08-21
+- Branch: `stage-3-gold-collection`
+- Starting commit: `5b6356de871de1f0e36c3a52212f36818cdd2461`
+- Config: CoST-only RBF-SVM F0 decision scores appended to segmented Deepskin F1; nested target C/gamma search
+- Split: strict outer leave-one-Deepskin-operator-out; source model sees no Deepskin labels; target tuning sees only outer-training operators
+- Commands: syntax check, 20-test suite, reduced smoke, verified smoke deletion, full `python scripts/run_cost_score_assisted.py`
+- Artifacts: `artifacts/evaluation/cost_score_assisted_v1/` and `artifacts/stage_reports/stage_14_cost_e3_score_assisted.md`
+- Metrics: target-only Macro F1 0.8535 versus assisted 0.8656, delta +0.0121; balanced-accuracy delta +0.0127
+- Audit: fold deltas +0.0200/-0.0283/+0.0474; minimum class delta PAT -0.0307; bootstrap positive probability 0.801–0.819 with CI crossing zero
+- Status: numerical transfer gates pass and E3 is retained as a candidate; no runtime change until E4 and final candidate audit are complete
+
+## Stage 13 / plan E2 weighted joint training — completed, release gate not passed
+
+- Date: 2026-08-21
+- Branch: `stage-3-gold-collection`
+- Starting commit: `5b6356de871de1f0e36c3a52212f36818cdd2461`
+- Config: F0 common; RBF-SVM, Extra Trees, Random Forest; alpha 0.05/0.10/0.25/0.50/1.00; seeds 20260821/22/23
+- Split: strict outer leave-one-Deepskin-operator-out; alpha selected using only the two outer-training operators
+- Commands: 20-test suite, reduced smoke, verified smoke deletion, full `python scripts/run_cost_joint_weighted.py`
+- Artifacts: `artifacts/evaluation/cost_joint_weighted_v1/` and `artifacts/stage_reports/stage_13_cost_e2_joint_weighted.md`
+- Best stable pooled result: RBF-SVM target-only 0.8321 versus joint 0.8468 Macro F1, delta +0.0146; alpha 0.05 in all folds/seeds
+- Audit: balanced-accuracy delta +0.0159; minimum class delta RUB -0.0432; bootstrap CI includes zero; fold deltas -0.0254/-0.0023/+0.0655
+- Status: E2 fails the at-least-two-non-decreasing-fold gate and is not a release candidate; proceed to E3 source-score assistance
+
+## Stage 12 / plan F0 and E1 CoST source-only — completed, domain shift confirmed
+
+- Date: 2026-08-21
+- Branch: `stage-3-gold-collection`
+- Starting commit: `5b6356de871de1f0e36c3a52212f36818cdd2461`
+- Config: `f0-common-v1` 74-feature schema; RBF-SVM C=10, gamma=scale, balanced class weights
+- Seed: deterministic GroupKFold split; model default deterministic training
+- GPU: not used; this small classical-ML experiment is CPU-bound
+- Commands: full native-rate CoST F0 extraction, E1 smoke, deletion of smoke output, full `python scripts/run_cost_source_only.py`, and 19-test suite
+- Artifacts: `artifacts/features/`, `artifacts/evaluation/cost_source_only_v1/`, and `artifacts/stage_reports/stage_12_cost_f0_e1.md`
+- Metrics: CoST grouped CV Macro F1 0.6587; source-only on 315 Deepskin Gold Macro F1 0.1036 and balanced accuracy 0.1746
+- Audit: exactly 315 target predictions, 45/class and 105/operator; 209 predictions collapsed to STATIC_TOUCH; finite metrics; no source-target leakage
+- Status: E1 completed as a domain diagnostic and rejected for runtime use; proceed to strict outer-operator E2 weighted joint training
+
+## Stage 11 / plan Stage 4 CoST import and mapping — passed
+
+- Date: 2026-08-21
+- Branch: `stage-3-gold-collection`
+- Starting commit: `5b6356de871de1f0e36c3a52212f36818cdd2461`
+- Config: official CoST v1; mapping `cost-to-deepskin-v1`; streaming read-only CSV audit
+- Seed: not applicable; deterministic import
+- GPU: not used
+- Command: official-file download, MD5/SHA-256 verification, `python scripts/import_cost.py`, and 18-test unit suite
+- Artifacts: ignored `data/external/cost/v1`; versionable `artifacts/cost/`, `docs/cost_usage_record.md`, and `artifacts/stage_reports/stage_11_cost_import.md`
+- Metrics: 1,496,855 frames; 7,805 captures; 31 subjects; 0 missing values; 0 bad frame steps; 4,460 mapped seven-class source captures
+- Status: import/mapping gate passed; next experiment is CoST feature extraction and source-domain/transfer evaluation
+
+
 ## Stage 10 positive-only conservative gate — q0.80 selected
 
 - Date: 2026-08-21
@@ -726,6 +842,59 @@
 - Preflight: canonical manifest has 140 eligible rows; order file exists; target directory did not previously exist
 - GPU: not used
 - Status: first five trials ready to launch; no session_02 result claimed yet
+
+## Continuous GUI parameter help text
+
+- Date: 2026-08-21
+- Branch: `stage-3-gold-collection`
+- Config: display-only GUI change; acquisition and classifier parameters unchanged
+- Command: `python -m py_compile scripts\\stream_recognize_gui.py`; `python -m unittest discover -s tests -q`
+- Artifact: `scripts/stream_recognize_gui.py`
+- Status: smoke passed; syntax check and 25/25 unit tests passed
+
+## Stage 21 PAT streaming parameter tuning
+
+- Date: 2026-08-21
+- Branch: `stage-3-gold-collection`
+- Dataset/config: packaged 315-trial Gold manifest; read-only PAT/IMPACT/TAP active-run audit
+- Seed: not applicable; deterministic descriptive audit
+- Finding: PAT gaps median 312.5 ms and P90 500 ms; 41/80 exceeded the old 300 ms end hold
+- Decision: keep threshold 3.0, margin 2.0, debounce 40 ms, gate scale 1.2; set end hold to 550 ms
+- Artifact: `artifacts/stage_reports/stage_21_pat_stream_tuning.md`
+- Status: implementation smoke passed (syntax and 26/26 tests); live PAT verification pending
+
+## Stage 22 PAT episode runtime correction
+
+- Date: 2026-08-21
+- Branch: `stage-3-gold-collection`
+- Config: 2–4 contacts, minimum 40 ms contact, minimum 100 ms separating gap; IMPACT candidate only
+- Seed: not applicable; deterministic rule and replay
+- Commands: focused unittest, full unittest discovery, 315-row packaged-model replay
+- Results: 28/28 tests passed; Gold full-fit replay fired zero corrections and changed zero stored IMPACT events; episode correction now gates original model evidence and streaming segmentation uses a 75 ms baseline window
+- Artifact: `artifacts/stage_reports/stage_22_pat_episode_runtime_fix.md`
+- Status: software gate passed; live reported PAT case pending
+
+## Stage 23 V1 design freeze
+
+- Date: 2026-08-22
+- Branch: `stage-3-gold-collection`
+- Decision: freeze the current traditional-ML runtime design and defer deep temporal networks
+- Canonical document: `docs/runtime_design_v1.md`
+- Stage report: `artifacts/stage_reports/stage_23_v1_design_freeze.md`
+- Git status: documents created locally; not staged, committed, or pushed
+
+## Stage 20 continuous streaming implementation
+
+- Date: 2026-08-21
+- Branch: `stage-3-gold-collection`
+- Goal: keep Deepskin enabled and continuously emit accepted final target gestures
+- Added: adaptive continuous contact-event detector, JSONL/label CLI stream, continuous GUI
+- Gate: calibrated per-class threshold with runtime multiplier; runtime default selected as 1.2 after GUI validation
+- Rejection: low-confidence events suppressed from target output
+- Storage: raw event saving is opt-in only
+- Verification: Python compile passed; 25/25 unit tests passed
+- Offline replay: Gold trial `operator_01/session_01/trial_000001_attempt_03` predicted RUB and passed the gate
+- Status: software gate passed; live USB stream and endurance validation remain
 
 ## Stage 3 Gold collection — operator_03/session_02 block 7 and session closeout
 - Date: 2026-08-21

@@ -1,0 +1,82 @@
+{
+  "evaluation_protocol": "strict outer Leave-One-Operator-Out pooled predictions",
+  "performance_claim_source": "artifacts\\evaluation\\cost_score_assisted_v2\\metrics.json",
+  "rows": 315,
+  "macro_f1": 0.8535014165678001,
+  "balanced_accuracy": 0.8539682539682539,
+  "accuracy": 0.8539682539682539,
+  "per_class_f1": {
+    "IMPACT": 0.8275862068965517,
+    "PAT": 0.9148936170212766,
+    "POKE": 0.7311827956989247,
+    "RUB": 0.8505747126436781,
+    "STATIC_TOUCH": 0.9148936170212766,
+    "STROKE": 0.8536585365853658,
+    "TAP": 0.8817204301075269
+  },
+  "confusion_matrix": [
+    [
+      36,
+      6,
+      1,
+      0,
+      2,
+      0,
+      0
+    ],
+    [
+      2,
+      43,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      1,
+      0,
+      34,
+      3,
+      4,
+      0,
+      3
+    ],
+    [
+      3,
+      0,
+      3,
+      37,
+      0,
+      2,
+      0
+    ],
+    [
+      0,
+      0,
+      2,
+      0,
+      43,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      4,
+      2,
+      0,
+      35,
+      4
+    ],
+    [
+      0,
+      0,
+      4,
+      0,
+      0,
+      0,
+      41
+    ]
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "schema_version": "deepskin-cost-provenance-v1",
+  "dataset": "Corpus of Social Touch (CoST)",
+  "version": 1,
+  "dataset_url": "https://data.4tu.nl/datasets/bc4e5c6a-cfa4-4844-83e4-74a71cae3df6/1",
+  "doi": "10.4121/uuid:5ef62345-3b3e-479c-8e1d-c922748c9b29",
+  "license": "CC BY-NC-SA 4.0",
+  "readme_md5": "454a2f2e38470fcb6087c891a85db238",
+  "csv_md5": "c6035f76d1e13f81168dd79586dcb742",
+  "creator": "Merel Jung",
+  "publisher": "4TU.ResearchData / University of Twente",
+  "imported_at_utc": "2026-08-21T08:34:42.030196+00:00",
+  "mapping_version": "cost-to-deepskin-v1",
+  "files": {
+    "README.txt": {
+      "bytes": 4491,
+      "md5": "454a2f2e38470fcb6087c891a85db238",
+      "sha256": "3b96731080f692c713dc5878f887b0c10b564fb1bb39c645295236171ae7f805"
+    },
+    "CoST.csv": {
+      "bytes": 455810440,
+      "md5": "c6035f76d1e13f81168dd79586dcb742",
+      "sha256": "7ccca614800ab7101be879adc42eaef853e144f1d5aabc4edf77eb7741b78264"
+    }
+  }
+}
