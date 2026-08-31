@@ -1,0 +1,34 @@
+{
+  "schema_version": "deepskin-runtime-release-v1",
+  "release_name": "deepskin-temporal-tcn-adapted-v1",
+  "release_date": "2026-08-24",
+  "status": "formal_local_runtime",
+  "model_sha256": "804efe1f528cb4df81051d5188583f7a8c31169cd6ddf540d79a5540d7d063c5",
+  "architecture": "SmallTCN",
+  "feature_version": "v1",
+  "input_channels": 21,
+  "training": {
+    "gold_rows": 315,
+    "natural_pat_rub_unique_training_rows": 20,
+    "natural_pat_rub_repeat": 4,
+    "epochs": 20,
+    "seed": 20260824
+  },
+  "validation": {
+    "natural_pat_rub_development_rows": 8,
+    "natural_pat_rub_development_correct": 8,
+    "gold_training_replay_accuracy": 0.9650793650793651,
+    "operator_acceptance": "效果很不错，决定作为正式使用版本",
+    "limitations": [
+      "Natural PAT/RUB result is a same-operator development split, not a broad population estimate.",
+      "Gold replay is an anti-forgetting diagnostic, not an independent generalization score.",
+      "Open-set rejection remains uncalibrated for the TCN softmax threshold."
+    ]
+  },
+  "previous_versions_documented_only": [
+    "models/deepskin_social_touch_v3_target_only",
+    "models/deepskin_temporal_tcn_v1",
+    "models/deepskin_temporal_tcn_motion_v2",
+    "models/deepskin_temporal_tcn_adapted_v1_candidate"
+  ]
+}

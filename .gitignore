@@ -23,6 +23,7 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 .venv/
+.venv-temporal/
 venv/
 
 # Raw, external, generated, and model data
@@ -35,6 +36,9 @@ data/interim/
 *.parquet
 *.joblib
 *.pkl
+*.pt
+*.pth
+!models/deepskin_temporal_tcn_adapted_v1/model.pt
 
 # Local configuration and secrets
 .env

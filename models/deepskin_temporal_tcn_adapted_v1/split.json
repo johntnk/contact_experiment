@@ -1,0 +1,46 @@
+{
+  "training": [
+    "03_pat_02_pulses3_正常",
+    "05_pat_03_pulses4_稍重",
+    "07_pat_04_pulses3_轻",
+    "09_pat_05_pulses2_正常",
+    "11_pat_06_pulses4_正常",
+    "13_pat_07_pulses3_稍重",
+    "15_pat_08_pulses2_轻",
+    "17_pat_09_pulses4_稍重",
+    "19_pat_10_pulses3_正常",
+    "21_pat_11_pulses2_稍重",
+    "02_rub_01_cycles1_慢",
+    "04_rub_02_cycles2_正常",
+    "06_rub_03_cycles3_快",
+    "08_rub_04_cycles2_慢",
+    "10_rub_05_cycles1_正常",
+    "12_rub_06_cycles3_正常",
+    "14_rub_07_cycles2_快",
+    "16_rub_08_cycles1_慢",
+    "18_rub_09_cycles3_快",
+    "20_rub_10_cycles2_正常"
+  ],
+  "validation": [
+    "23_pat_12_pulses4_轻",
+    "25_pat_13_pulses3_正常",
+    "27_pat_14_pulses2_正常",
+    "29_pat_15_pulses4_正常",
+    "22_rub_11_cycles1_快",
+    "26_rub_13_cycles2_正常",
+    "28_rub_14_cycles1_正常",
+    "30_rub_15_cycles3_正常"
+  ],
+  "excluded": [
+    {
+      "capture": "01_pat_01_pulses2_轻",
+      "label": "PAT",
+      "reason": "runtime detector did not complete an event"
+    },
+    {
+      "capture": "24_rub_12_cycles3_慢",
+      "label": "RUB",
+      "reason": "runtime detector did not complete an event"
+    }
+  ]
+}

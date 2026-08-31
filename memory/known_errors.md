@@ -1,5 +1,49 @@
 # Known Errors
 
+## 2026-08-24 - complete-event TCN degraded on incomplete causal windows
+
+- Date: 2026-08-24
+- Context: continuous recognition reused the formal personalized TCN on a rolling partial-event window.
+- Symptom: the operator reported weaker IMPACT, TAP, and POKE recognition, while PAT could be emitted as STROKE.
+- Root cause: the TCN was trained on complete events. Runtime resampled an unfinished event prefix to the model's full temporal length, creating a distribution shift; debounce changes only output timing and cannot reconstruct missing future evidence.
+- Fix: route sustained RUB/STATIC_TOUCH/STROKE through causal sliding-window inference, but classify TAP/POKE/IMPACT/PAT only from the completed event after release. Preserve the pure sliding-window implementation as a rollback entry.
+- Verification evidence: Python compilation and the full 37-test suite pass, including an explicit seven-class routing regression. The complete-event path classified all 28 detector-complete PAT/RUB development captures correctly; two recordings lacked a detector-complete event and were excluded.
+- Future caution: do not claim true early recognition from a model trained only on complete events. Train with prefix/window augmentation or a framewise objective before moving transient labels back to the causal path.
+- Related files/commands: `scripts/realtime_stream_gui.py`, `scripts/realtime_stream_gui_v1.py`, `src/deepskin_temporal/realtime.py`, `tests/test_realtime_temporal.py`, `artifacts/evaluation/hybrid_event_path_pat_rub_20260824.json`.
+
+## 2026-08-24 - generic realtime debounce suppressed short IMPACT events
+
+- Date: 2026-08-24
+- Context: causal 100 ms sliding-window recognition with a 200 ms minimum evidence delay and three generic first-label confirmations.
+- Symptom: the operator reported that IMPACT recognition became noticeably worse in the realtime streaming version.
+- Root cause: IMPACT is brief, but it inherited the same three-confirmation startup gate as sustained gestures. Nineteen of 45 Gold IMPACT captures had fewer than three active inference opportunities after the evidence delay, so even perfect frame-level predictions could not be emitted before release.
+- Fix: use two first-label confirmations for IMPACT while retaining three for generic classes and two for all later label switches; expose the IMPACT confirmation count in the GUI.
+- Verification evidence: the opportunity audit improves theoretical coverage from 26/45 to 44/45 Gold IMPACT captures; a 30-capture PAT/RUB development replay introduced zero false first IMPACT outputs and preserved its previous final-label result; full tests passed after the change.
+- Future caution: compare each gesture's active-duration distribution with the complete runtime confirmation budget. Short transient and sustained gestures should not automatically share identical startup debounce.
+- Related files/commands: `scripts/realtime_stream_gui.py`, `scripts/audit_realtime_replay.py`, `src/deepskin_temporal/realtime.py`, `artifacts/evaluation/realtime_stream_replay_pat_impact_fast_hold300_20260824.json`.
+
+## 2026-08-24 - inference monitoring added redundant CUDA barriers to the sampling thread
+
+- Date: 2026-08-24
+- Context: first live use after adding end-to-end inference timing to the causal streaming GUI.
+- Symptom: the operator reported that recognition felt worse even though the model, thresholds, window, and debounce parameters were unchanged.
+- Root cause: timing instrumentation called `torch.cuda.synchronize()` before and after every inference on the same worker that reads the SDK. The subsequent `.cpu().numpy()` already waits for CUDA completion, so the explicit barriers were redundant and added avoidable sampling-thread stalls.
+- Fix: remove both explicit CUDA synchronization calls and measure from before feature extraction through the existing CPU result transfer. Keep the bounded timing history and GUI metrics unchanged.
+- Verification evidence: process inspection showed one active GUI interpreter pair rather than competing high-load GUI instances; the focused five-test realtime suite and full 36-test suite passed; no explicit synchronize call remains in the GUI.
+- Future caution: observability must not add synchronization barriers to hardware acquisition paths. Prefer existing completion points, or move profiling to a separate path if more precise device-only timing is required.
+- Related files/commands: `scripts/realtime_stream_gui.py`, `src/deepskin_temporal/realtime.py`, `tests/test_realtime_temporal.py`, `python -m unittest discover -s tests -q`.
+
+## 2026-08-24 - motion-channel TCN improved Gold OOF but worsened live PAT/RUB
+
+- Date: 2026-08-24
+- Context: exploratory attempt to correct operator-reported PAT/RUB confusion in the continuous TCN GUI.
+- Symptom: adding explicit contact, pressure-change, and centroid-motion channels raised pooled Gold LOPO Macro F1 from 0.8623 to 0.8888, but accuracy on eight complete live diagnostics fell from 2/8 to 1/8; four of five PAT captures became RUB.
+- Root cause: the new live PAT captures did not match the frozen Gold PAT protocol. All five were one continuous active run at the 100 ms contact-gap definition, and only one separated into multiple runs even at 20-40 ms. The motion channels amplified this continuous-contact domain shift instead of restoring repeated-pat semantics.
+- Fix: reject the motion-v2 package for GUI deployment, preserve the old TCN runtime, and require a separate natural-use PAT/RUB adaptation dataset before another model iteration.
+- Verification evidence: three Gold outer folds produced Macro F1 0.875650/0.894284/0.895428 with zero PAT/RUB cross-confusions; exact runtime replay excluded two RUB captures lacking the 550 ms release tail and measured motion-v2 at 1/8 on the remaining immutable raw files. All 31 unit tests passed.
+- Future caution: do not select temporal channels or runtime models solely from the original separated-pulse Gold protocol when intended users perform PAT as residual/continuous capacitive contact. Offline gain and live behavior must both pass, and already-inspected live diagnostics are development data thereafter.
+- Related files/commands: `src/deepskin_temporal/sequence.py`, `scripts/audit_live_pat_rub_tcn.py`, `scripts/train_temporal_tcn.py`, `scripts/run_temporal_outer_fold.py`, `scripts/train_temporal_final.py`, `artifacts/evaluation/pat_rub_live_tcn_motion_v2_audit_20260824.json`.
+
 ## 2026-08-21 — pulse_count instruction was operationally ambiguous
 
 - Date: 2026-08-21
@@ -131,3 +175,14 @@
 - Verification evidence: two focused regressions passed; syntax checks passed; full suite passed 28/28.
 - Future caution: semantic post-processing must not silently change the statistical reference used to validate upstream evidence. A streaming baseline window must fit completely inside guaranteed idle pre-roll.
 - Related files/commands: `scripts/stream_recognize.py`, `src/deepskin_data/training.py`, `tests/test_training.py`, `python -m unittest discover -s tests -q`.
+
+## 2026-08-24 — temporal loader rejected every Gold trial because timestamps repeat
+
+- Date: 2026-08-24
+- Context: first V2 TCN GPU smoke on the existing Deepskin Gold recordings.
+- Symptom: sequence extraction stopped before training with `temporal trial must be finite with strictly increasing timestamps`.
+- Root cause: all 315 recordings contain non-decreasing millisecond-quantized timestamps with repeated values; host polling produces multiple observations in the same timestamp bin, although no timestamp decreases.
+- Fix: accept non-decreasing timestamps and deterministically retain the final observation for each duplicate timestamp before interpolation; continue to reject actual decreases.
+- Verification evidence: all 315 trials were audited (duplicates present, zero decreases); two focused tests passed; full suite passed 30/30; the two-epoch CUDA smoke then completed with finite loss and gradients.
+- Future caution: define whether a time-series algorithm requires monotonic or strictly monotonic time. Normalize legitimate duplicate timestamp bins before interpolation rather than invalidating Gold data.
+- Related files/commands: `src/deepskin_temporal/sequence.py`, `tests/test_temporal_sequence.py`, `scripts/train_temporal_tcn.py`, `artifacts/temporal/tcn_smoke_v1/report.json`.

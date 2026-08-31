@@ -1,0 +1,76 @@
+{
+  "schema_version": "deepskin-temporal-adaptation-report-v1",
+  "seed": 20260824,
+  "epochs": 20,
+  "feature_version": "v1",
+  "input_channels": 21,
+  "adaptation_repeat": 4,
+  "gold_rows": 315,
+  "natural_train_unique_rows": 20,
+  "natural_validation_rows": 8,
+  "fitted_rows_after_repeat": 395,
+  "final_train_loss": 0.07614603199996055,
+  "natural_validation_accuracy_development_only": 1.0,
+  "natural_validation_confusion_pat_rub": [
+    [
+      4,
+      0
+    ],
+    [
+      0,
+      4
+    ]
+  ],
+  "natural_validation_predictions": [
+    {
+      "capture": "23_pat_12_pulses4_轻",
+      "true_label": "PAT",
+      "predicted_label": "PAT",
+      "confidence": 0.9994500279426575
+    },
+    {
+      "capture": "25_pat_13_pulses3_正常",
+      "true_label": "PAT",
+      "predicted_label": "PAT",
+      "confidence": 0.9977179765701294
+    },
+    {
+      "capture": "27_pat_14_pulses2_正常",
+      "true_label": "PAT",
+      "predicted_label": "PAT",
+      "confidence": 0.9996520280838013
+    },
+    {
+      "capture": "29_pat_15_pulses4_正常",
+      "true_label": "PAT",
+      "predicted_label": "PAT",
+      "confidence": 0.859201192855835
+    },
+    {
+      "capture": "22_rub_11_cycles1_快",
+      "true_label": "RUB",
+      "predicted_label": "RUB",
+      "confidence": 0.9906835556030273
+    },
+    {
+      "capture": "26_rub_13_cycles2_正常",
+      "true_label": "RUB",
+      "predicted_label": "RUB",
+      "confidence": 0.994988203048706
+    },
+    {
+      "capture": "28_rub_14_cycles1_正常",
+      "true_label": "RUB",
+      "predicted_label": "RUB",
+      "confidence": 0.9998903274536133
+    },
+    {
+      "capture": "30_rub_15_cycles3_正常",
+      "true_label": "RUB",
+      "predicted_label": "RUB",
+      "confidence": 0.9987043142318726
+    }
+  ],
+  "model_sha256": "804efe1f528cb4df81051d5188583f7a8c31169cd6ddf540d79a5540d7d063c5",
+  "performance_claim": "development split only; independent live acceptance still required"
+}

@@ -1,5 +1,174 @@
 # Experiment Ledger
 
+## Stage 42 / remote TTS per-response volume control
+
+- Date: 2026-08-25
+- Change: add a 0-100 volume control to the remote TTS GUI, default 100
+- Implementation: scale returned 16-bit PCM samples before temporary-file playback; do not change Windows master/application volume and do not add unsupported fields to the remote API payload
+- Verification: focused format/amplitude/bounds tests and full suite run before restarting the service
+
+## Stage 41 / remote TTS runtime and local SAPI retirement
+
+- Date: 2026-08-25
+- Decision: use only the validated remote TTS API; permanently retire Windows local SAPI settings and runtime
+- Runtime: isolated `scripts/realtime_agent_remote_tts_gui.py`; endpoint `http://192.168.102.106:8021/v1/tts`; default emotion `excited_high`
+- Flow control: single latest-value mailbox for remote synthesis/playback; new speech interrupts old playback; temporary WAV files are deleted after use
+- Deleted: `src/deepskin_tts/windows_sapi.py`, `scripts/realtime_agent_tts_gui.py`, `scripts/probe_tts.py`, `tests/test_tts_worker.py`, and `docs/agent_tts_v1.md`; active local-TTS GUI processes were stopped
+- Preserved: formal recognizer, Agent-only entry, remote API probe evidence, and historical Stage 38 record
+- Verification: remote TTS focused tests and full suite passed before retirement; post-deletion suite and live end-to-end operator test follow
+
+## Stage 40 / remote TTS API compatibility probe
+
+- Date: 2026-08-25
+- Branch/commit: `v2-temporal-exploration` / `090a49ccf81b2a6429808d94ae27a86c2d898128`
+- Endpoint/config: `POST http://192.168.102.106:8021/v1/tts`; request `deepskin-tts-probe-20260825-01`; emotion `excited_high`; provided Chinese test text; no seed applicable
+- Response: HTTP 200, `audio/wav`, 545324 bytes, client total 0.690776 s; server total 666.668 ms and queue 95.381 ms
+- WAV audit: valid mono 16-bit uncompressed PCM, 32000 Hz, 272640 frames, 8.52 s; SHA-256 `FF2479799CF619355108FA43747F98956699FFD540E87650DA32038F33A85A24`
+- Playback: Windows synchronous WAV playback completed without an API/runtime error
+- Conclusion: endpoint transport, schema, WAV integrity and local playback are compatible with this host; subjective audio/emotion quality remains an operator decision
+- Artifacts: `artifacts/tts_api_probe/request_20260825_01.json`, `response_headers_20260825_01.txt`, `response_20260825_01.wav`, `report_20260825_01.md`
+
+## Stage 39 / Agent development host migration
+
+- Date: 2026-08-25
+- Decision: project owner changed the frontend/proxy host from `192.168.100.111:5175` to `192.168.100.110:5175`
+- Defaults: frontend root `http://192.168.100.110:5175/`; IM proxy `http://192.168.100.110:5175/api/agent/im/generate`; user/session unchanged
+- Connectivity: frontend root returned HTTP 200; GET on the POST-only generate path returned the expected route-level HTTP 404
+- Link handling: IM result URL is now constructed from URL origin, so both a frontend root and an existing `/s/...` route produce `/im/{sessionId}` without malformed double slashes
+- Verification: focused bridge tests and full suite run after the migration; a real POST remains for the next operator touch test
+
+## Stage 38 / isolated local Windows TTS runtime
+
+- Date: 2026-08-25
+- Branch/commit: `v2-temporal-exploration` / `090a49ccf81b2a6429808d94ae27a86c2d898128`
+- Isolation: added `scripts/realtime_agent_tts_gui.py`; preserved the formal recognizer and non-TTS Agent entry
+- Engine: Windows `SAPI.SpVoice` COM in a hidden child PowerShell process; detected Huihui Chinese and Zira English voices
+- Backpressure: one-slot latest-speech mailbox; default interrupt-current behavior; TTS never runs in the SDK or Agent network threads
+- Security: Agent text and voice names are Base64 data decoded by a fixed script, not executable PowerShell fragments
+- Smoke command: `.\.venv-temporal\Scripts\python.exe .\scripts\probe_tts.py`; actual audible Chinese speech completed with `TTS_OK`
+- Verification: focused TTS tests passed 3/3; full suite passed 45/45; syntax and diff checks passed
+- Limitation: actual touch-to-Agent-to-TTS flow still requires operator acceptance; no training/GPU experiment and no seed applicable
+- Artifacts: `src/deepskin_tts/`, `scripts/realtime_agent_tts_gui.py`, `scripts/probe_tts.py`, `docs/agent_tts_v1.md`, `tests/test_tts_worker.py`
+
+## Stage 37 / Deepskin to IM Agent SSE bridge
+
+- Date: 2026-08-24
+- Branch/commit: `v2-temporal-exploration` / `090a49ccf81b2a6429808d94ae27a86c2d898128`
+- Runtime: isolated `scripts/realtime_agent_gui.py` entry on top of the accepted hybrid recognizer; formal non-Agent entry remains unchanged
+- Backpressure: one network worker, one-slot latest-action mailbox, minimum request-start interval 3 seconds, 20-second timeout; SDK sampling never waits for HTTP
+- Endpoint smoke: `POST http://192.168.100.111:5175/api/agent/im/generate`, user `test-user-1`, session `web-2026-08-24-5pj76na4`, label TAP
+- Result: SSE completed successfully in 4585.578 ms; LLM generation 2525 ms; returned state Mood=-1, Favor=0, Egy=0, Stress=0
+- Local verification: Agent-focused tests and full suite passed; no training or GPU experiment performed; no seed applicable
+- Frontend finding: supplied `/s/...` route reads the generic Agent namespace, not IM; correct IM route is `/im/...`. The remote frontend does not automatically refresh external writes, and the browser user ID must match `test-user-1`
+- Artifacts: `src/deepskin_agent/`, `scripts/realtime_agent_gui.py`, `scripts/probe_agent_sse.py`, `docs/agent_im_bridge_v1.md`, `tests/test_agent_bridge.py`
+
+## Stage 36 / formal hybrid-v1 retention and derived-artifact cleanup
+
+- Date: 2026-08-24
+- Decision: project owner accepted the hybrid runtime as the formal version and authorized permanent cleanup of earlier TCN versions after documentation
+- Preserved: formal adapted-v1 model, hybrid GUI, temporal source/tests, 60-file natural PAT/RUB adaptation source dataset, Gold data, formal hybrid replay evidence, release documentation and experiment/error records
+- Deleted: four obsolete/candidate TCN model directories, `artifacts/temporal/`, old TCN/PAT-RUB replay JSON files, the old PAT/RUB live diagnostic directory, and the pure sliding-window rollback script
+- Recovery: deleted files were removed directly and are not recoverable from the Recycle Bin; reproducible training inputs for the formal model remain
+- Verification: formal model and GUI SHA-256 rechecked against `docs/formal_runtime_hybrid_v1_retention.md`; full unit suite passed after cleanup
+
+## Stage 35 / hybrid causal-and-completed-event runtime
+
+- Date: 2026-08-24
+- Trigger: live causal-window feedback showed weaker IMPACT/TAP/POKE and PAT prematurely emitted as STROKE
+- Root cause: the formal TCN was trained on complete events, while causal inference temporally rescaled incomplete short-event prefixes into a complete sequence; per-class debounce cannot remove this input-distribution mismatch
+- Change: keep causal sliding-window output for sustained RUB/STATIC_TOUCH/STROKE; defer TAP/POKE/IMPACT/PAT to the approved complete-event classifier after the 300 ms release hold
+- Isolation: preserved the prior pure sliding-window entry as `scripts/realtime_stream_gui_v1.py`; formal event GUI and model package remain unchanged
+- Verification: Python compilation passed; hybrid routing regression plus full 37/37 unit suite passed; complete-event development replay classified 14/14 PAT and 14/14 RUB among 28 completed events, with 2 recordings excluded because the event detector could not complete them
+- Limitation: PAT may still resemble STROKE before enough evidence exists, so the GUI result requires live validation; replay data are seen operator-specific development data, and IMPACT/TAP/POKE have not yet received an independent hybrid live test
+
+## Stage 34 / IMPACT short-event output gate correction
+
+- Date: 2026-08-24
+- Trigger: operator reported reduced IMPACT recognition in the causal streaming GUI
+- Localization: 19/45 Gold IMPACT captures offered fewer than three active 100 ms inference opportunities after the fixed 200 ms evidence delay; the generic initial-confirmation gate could suppress a correct short event before release
+- Candidate: IMPACT-specific initial confirmation count 2; generic initial count 3 and switch count 2 unchanged
+- Safety replay: adding IMPACT fast confirmation caused zero false first IMPACT outputs on 30 already-used natural PAT/RUB captures; final-label diagnostic remained 29/30
+- Opportunity audit: captures with enough theoretical confirmation opportunities improve from 26/45 at count3 to 44/45 at count2
+- GUI: IMPACT initial confirmation is adjustable and defaults to 2
+- Limitation: opportunity and development replay are not an independent live IMPACT accuracy estimate; operator retest required
+
+## Stage 33 / bounded real-time inference performance monitor
+
+- Date: 2026-08-24
+- Trigger: project owner asked whether long-running action accumulation could make inference fall behind
+- Change: measure end-to-end feature extraction plus CUDA inference through the existing CPU result-transfer completion point; retain only the latest 100 timings; display mean/P95/max, recent overruns, total overruns, and configured interval budget
+- Queue behavior: inference remains synchronous in the sampling worker; overruns reduce update cadence but cannot create an unbounded inference backlog
+- Memory behavior: raw-frame deque remains bounded to window plus 1000 ms; latency history is bounded to 100 values
+- Scope: observability only; model, labels, thresholds, and temporal decision behavior unchanged
+- Live correction: the first monitor build added redundant explicit CUDA synchronization in the SDK sampling worker and felt worse to the operator; both barriers were removed after process/code localization, with 36/36 tests passing
+
+## Stage 32 / real-time latency tuning - PAT fast start and 300 ms release clear
+
+- Date: 2026-08-24
+- Trigger: operator accepted continuous RUB and no-release RUB→STATIC_TOUCH→STROKE transitions, but reported slow release clear and noticeable stable PAT startup latency
+- Compared configs on the already-used 30-capture development replay: baseline 100 ms/initial3/hold550; global initial2/hold300; 50 ms/global initial2/hold300; class-specific PAT initial2/general initial3/hold300
+- Rejected: global initial2 increased early wrong stabilized outputs to 10/30; 50 ms plus initial2 increased instability further
+- Selected: 100 ms update, general initial3, PAT initial2, switch2, release hold300 ms
+- Selected replay: 30/30 runtime-complete; 29/30 correct final label; PAT median first-correct latency 421 ms; RUB median 750 ms; the additional capture enabled by shorter release hold was the one wrong final PAT
+- GUI: PAT initial confirmation and release-clear duration are now user-adjustable; defaults 2 and 300 ms
+- Limitation: tuning reused development captures and requires live confirmation; formal event-completion GUI and model are unchanged
+
+## Stage 31 / causal real-time streaming runtime - live validation ready
+
+- Date: 2026-08-24
+- Branch: `v2-temporal-exploration`
+- Base model: formal personalized TCN, SHA-256 `804efe1f528cb4df81051d5188583f7a8c31169cd6ddf540d79a5540d7d063c5`
+- Runtime: fixed pre-contact baseline; causal latest 1500 ms window; inference every 100 ms; first-label debounce 3; switch debounce 2; confidence threshold 0.50; release clear after 550 ms
+- Isolation: new `scripts/realtime_stream_gui.py`; formal event-completion GUI remains unchanged
+- Tests: 3 new real-time unit tests and full 34/34 suite passed; syntax and CLI smoke passed
+- Replay diagnostic: 30 natural captures, 28 runtime-complete, 28/28 produced output and ended on the expected label; median first-correct latency 640 ms (PAT 531 ms, RUB 750 ms)
+- Stability: 3/14 RUB captures briefly stabilized to another label before switching to RUB; PAT had zero stabilized-label excursions
+- Artifact: `artifacts/evaluation/realtime_stream_replay_adaptation_20260824_v1.json`
+- Limitation: replay data was already used during personalization; results validate plumbing/latency only. Continuous no-release transitions require live acceptance.
+- Status: software/replay smoke passed; launch hardware GUI for operator validation
+
+## Stage 30 / personalized TCN promoted to formal local runtime
+
+- Date: 2026-08-24
+- Branch: `v2-temporal-exploration`
+- Decision authority: project owner accepted the live behavior as the formal use version
+- Source candidate: `models/deepskin_temporal_tcn_adapted_v1_candidate/`
+- Formal package: `models/deepskin_temporal_tcn_adapted_v1/`
+- Integrity: source and formal `model.pt` SHA-256 both `804efe1f528cb4df81051d5188583f7a8c31169cd6ddf540d79a5540d7d063c5`
+- Runtime change: `scripts/temporal_stream_gui.py` now defaults to the formal package; `--model-dir` remains available for explicit rollback/replay
+- Preservation: V1 RBF-SVM, original TCN, rejected motion-v2, and the accepted candidate directory remain intact
+- Evidence: natural PAT/RUB development 8/8; Gold training replay 96.5% as an anti-forgetting diagnostic; operator reported that live behavior was very good
+- Limitations: same-operator personalization; no broad-population claim; TCN open-set softmax threshold remains uncalibrated
+- Status: formal local runtime selected; release manifest and runtime documentation added
+
+## Stage 29 / natural PAT-RUB personalization - candidate awaiting independent acceptance
+
+- Date: 2026-08-24
+- Branch: `v2-temporal-exploration`
+- Starting commit: `090a49ccf81b2a6429808d94ae27a86c2d898128` with uncommitted V2 work
+- Data: 30 isolated natural-use captures, 15/class; 28 runtime-complete (14/class); two excluded for failing the 550 ms release-tail requirement
+- Frozen development split: first 10 usable/class for adaptation and last 4 usable/class for development validation; adaptation rows repeated 4x and mixed with all 315 Gold rows
+- Config: seed 20260824; AdamW 1e-3/1e-3; 20 epochs; 21-channel and 27-channel candidates; CUDA RTX 5060 Ti
+- Baselines on the 28 natural captures before adaptation: old 21-channel TCN 17/28; rejected motion-v2 16/28
+- Smoke: two 2-epoch candidates passed finite-loss/gradient/checkpoint checks and achieved 8/8 development rows, but Gold training replay was only 75.9%/69.2%; smoke checkpoints rejected for runtime
+- Full candidates: 21-channel achieved 8/8 natural development and 96.5% Gold training replay; 27-channel achieved 7/8 and 97.8%; Gold replay is an anti-forgetting diagnostic, not generalization performance
+- Selected candidate: `models/deepskin_temporal_tcn_adapted_v1_candidate/`, SHA-256 `804efe1f528cb4df81051d5188583f7a8c31169cd6ddf540d79a5540d7d063c5`; GUI must be launched with explicit `--model-dir`
+- Tests: 31/31 passed; CLI help and Python compilation passed
+- Status: candidate GUI launched for usability feedback; default GUI remains the old TCN. A new, untouched natural PAT/RUB acceptance set is required before promotion.
+
+## Stage 28 / PAT-RUB live diagnostic and motion-channel TCN - runtime rejected
+
+- Date: 2026-08-24
+- Branch: `v2-temporal-exploration`
+- Starting commit: `090a49ccf81b2a6429808d94ae27a86c2d898128` with uncommitted V2 temporal work
+- Config: seed 20260824; Gold-only 3-fold LOPO; 27 channels (original 21 plus contact state, pressure delta/absolute delta, centroid dx/dy/speed); max 40 epochs; full fit 32 epochs
+- Commands: controlled 5 PAT/5 RUB raw capture; exact runtime-detector replay; two CUDA smokes; three outer folds; 31-test suite; full 315-row package fit; live diagnostic replay
+- Artifacts: `data/interim/pat_rub_live_diagnostic_20260824_v2/`, `artifacts/evaluation/pat_rub_live_tcn_audit_20260824_v1.json`, `artifacts/evaluation/pat_rub_live_tcn_motion_v2_audit_20260824.json`, `artifacts/temporal/tcn_motion_v2_*_20260824/`, and `models/deepskin_temporal_tcn_motion_v2/`
+- Gold OOF: pooled Macro F1 0.888844 and balanced accuracy 0.888889; fold Macro F1 0.875650/0.894284/0.895428; fold deltas versus V1 RBF +0.001113/-0.011822/+0.115369; zero PAT/RUB cross-confusions
+- Live diagnostic: 8/10 captures completed the exact 550 ms runtime end hold; old TCN 2/8 correct, motion-v2 1/8 correct; motion-v2 labeled 4/5 PAT as RUB
+- Signal audit: all five usable PAT captures appeared as one contact at the frozen 100 ms gap; only one recovered multiple contacts at a 20-40 ms gap. The natural live PAT protocol therefore differs materially from the separated 2-4-contact Gold PAT definition.
+- Status: motion-v2 runtime rejected despite better Gold OOF. Existing TCN GUI remains unchanged. Next experiment must collect a small, versioned natural-use PAT/RUB adaptation set with complete post-action hold; do not tune further on the eight already-inspected diagnostics and call them an independent test.
+
 ## Stage 19 / final target-only package — completed and audited
 
 - Date: 2026-08-21
@@ -882,6 +1051,56 @@
 - Canonical document: `docs/runtime_design_v1.md`
 - Stage report: `artifacts/stage_reports/stage_23_v1_design_freeze.md`
 - Git status: documents created locally; not staged, committed, or pushed
+
+## Stage 24 V2 temporal TCN GPU smoke
+
+- Date: 2026-08-24
+- Branch/base: `v2-temporal-exploration` from V1 commit `090a49c`
+- Config: 21-channel compact frame representation, 256-frame mask, 41,639-parameter residual TCN, AdamW, 2 epochs
+- Seed: 20260824
+- Command: `.venv-temporal\\Scripts\\python.exe scripts\\train_temporal_tcn.py --output artifacts\\temporal\\tcn_smoke_v1 --epochs 2 --seed 20260824`
+- Split: operator_01 train (105), operator_02 validation (105), operator_03 untouched
+- GPU: RTX 5060 Ti; PyTorch 2.11.0+cu128; peak 50.8 MB
+- Result: finite loss 2.5516 to 1.6086; diagnostic validation accuracy 0.1905 to 0.3143; smoke passed
+- Artifact: `artifacts/temporal/tcn_smoke_v1/report.json`
+- Claim boundary: pipeline smoke only, not a formal performance result
+
+## Stage 25 V2 TCN outer operator_03 fold
+
+- Date: 2026-08-24
+- Branch: `v2-temporal-exploration`
+- Seed/config: 20260824; frozen 41,639-parameter TCN; maximum 40 epochs
+- Inner selection: operator_01→02 and operator_02→01; selected epoch 35
+- Outer split: operator_01+02 train (210), operator_03 test (105)
+- Command: `.venv-temporal\\Scripts\\python.exe scripts\\run_temporal_outer_fold.py --output artifacts\\temporal\\tcn_outer03_v1 --max-epochs 40 --seed 20260824`
+- Result: Macro F1 0.8269 versus same-fold V1 0.7801, delta +0.0469
+- Audit: 105/105 predictions and finite metrics; STATIC_TOUCH F1 delta -0.0899 fails the per-class gate
+- Status: promising exploratory fold; not a deployment candidate and no V1 replacement
+- Artifact: `artifacts/stage_reports/stage_25_temporal_outer03_v1.md`
+
+## Stage 26 frozen TCN full LOPO audit
+
+- Date: 2026-08-24
+- Branch: `v2-temporal-exploration`
+- Config/seed: unchanged 41,639-parameter TCN; seed 20260824; 40-epoch inner search
+- Outer results: operator_01 0.8564, operator_02 0.9044, operator_03 0.8269 Macro F1
+- Pooled: Macro F1 0.8623 versus V1 0.8535, delta +0.0088
+- Per-class concern: STATIC_TOUCH delta -0.1064
+- Paired bootstrap: 10,000 replicates, P(delta>0)=0.6456, 95% CI [-0.0357, 0.0534]
+- Gate decision: 0/3 release gates passed; TCN v1 rejected as V1 replacement
+- Canonical audit: `artifacts/evaluation/temporal_tcn_v1_summary_bootstrap.json`
+- Stage report: `artifacts/stage_reports/stage_26_temporal_tcn_v1_full_lopo.md`
+
+## Stage 27 experimental TCN runtime demo
+
+- Date: 2026-08-24
+- Branch: `v2-temporal-exploration`
+- Final exploratory fit: 315 Gold trials, 36 epochs, seed 20260824, RTX 5060 Ti
+- Model: 41,639 parameters; SHA-256 `8e1a0a87f69143bc93339d6889259ef8c94fe6050cc0e6dd4bd68dd514cb1b68`
+- Runtime: `scripts/temporal_stream_gui.py`; independent from V1
+- Confidence threshold: softmax 0.50 default, not an open-set calibrated gate
+- Verification: reload and finite inference passed; Gold RUB replay correct at 0.9998; 30/30 tests passed
+- Status: ready for local hardware evaluation; not a formal V1 replacement
 
 ## Stage 20 continuous streaming implementation
 
