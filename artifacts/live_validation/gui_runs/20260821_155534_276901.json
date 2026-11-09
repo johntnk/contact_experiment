@@ -1,0 +1,46 @@
+{
+  "predicted_label": "IMPACT",
+  "expected_label": null,
+  "sensor_orientation": "旋转 180°",
+  "orientation_transform": "both",
+  "raw_matrix_orientation": "device_native",
+  "ranked_scores": [
+    {
+      "label": "IMPACT",
+      "score": 6.28796559010553
+    },
+    {
+      "label": "PAT",
+      "score": 5.2610438339593415
+    },
+    {
+      "label": "RUB",
+      "score": 4.166520598388308
+    },
+    {
+      "label": "POKE",
+      "score": 2.9311370928025275
+    },
+    {
+      "label": "STROKE",
+      "score": 1.7804575102944593
+    },
+    {
+      "label": "TAP",
+      "score": 0.7311212618995927
+    },
+    {
+      "label": "STATIC_TOUCH",
+      "score": -0.2737602857106645
+    }
+  ],
+  "segment_info": {
+    "found": true,
+    "threshold": 5.0,
+    "start_ms": 609.0,
+    "end_ms": 1328.0,
+    "padded_start_ms": 515.0,
+    "padded_end_ms": 1422.0
+  },
+  "raw_file": "20260821_155534_276901.npz"
+}

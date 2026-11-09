@@ -1,0 +1,46 @@
+{
+  "predicted_label": "RUB",
+  "expected_label": null,
+  "sensor_orientation": "正常方向 (0°)",
+  "orientation_transform": "original",
+  "raw_matrix_orientation": "device_native",
+  "ranked_scores": [
+    {
+      "label": "RUB",
+      "score": 6.2925377263155085
+    },
+    {
+      "label": "IMPACT",
+      "score": 5.230286453157703
+    },
+    {
+      "label": "STROKE",
+      "score": 4.161638911320215
+    },
+    {
+      "label": "PAT",
+      "score": 2.8182254401400773
+    },
+    {
+      "label": "POKE",
+      "score": 1.829654645299276
+    },
+    {
+      "label": "TAP",
+      "score": 0.7387928801703327
+    },
+    {
+      "label": "STATIC_TOUCH",
+      "score": -0.2725170261993282
+    }
+  ],
+  "segment_info": {
+    "found": true,
+    "threshold": 5.0,
+    "start_ms": 266.0,
+    "end_ms": 1438.0,
+    "padded_start_ms": 172.0,
+    "padded_end_ms": 1531.0
+  },
+  "raw_file": "20260821_155448_439089.npz"
+}

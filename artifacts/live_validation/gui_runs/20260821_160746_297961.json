@@ -1,0 +1,54 @@
+{
+  "predicted_label": "PAT",
+  "output_label": "PAT",
+  "positive_gate": {
+    "accepted": true,
+    "output_label": "PAT",
+    "reason": "accepted",
+    "distance": 4.037964581690484,
+    "threshold": 5.564149445035344
+  },
+  "expected_label": null,
+  "sensor_orientation": "正常方向 (0°)",
+  "orientation_transform": "original",
+  "raw_matrix_orientation": "device_native",
+  "ranked_scores": [
+    {
+      "label": "PAT",
+      "score": 6.268370496362095
+    },
+    {
+      "label": "IMPACT",
+      "score": 5.228616339972868
+    },
+    {
+      "label": "RUB",
+      "score": 4.264029302151951
+    },
+    {
+      "label": "STROKE",
+      "score": 2.8561006289658315
+    },
+    {
+      "label": "POKE",
+      "score": 1.8569677131237292
+    },
+    {
+      "label": "TAP",
+      "score": 0.7278317524047206
+    },
+    {
+      "label": "STATIC_TOUCH",
+      "score": -0.26877233315824667
+    }
+  ],
+  "segment_info": {
+    "found": true,
+    "threshold": 4.0,
+    "start_ms": 563.0,
+    "end_ms": 1844.0,
+    "padded_start_ms": 469.0,
+    "padded_end_ms": 1938.0
+  },
+  "raw_file": "20260821_160746_297961.npz"
+}

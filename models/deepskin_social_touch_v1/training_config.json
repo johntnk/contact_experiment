@@ -1,0 +1,26 @@
+{
+  "model_version": "1.0.0",
+  "training_recipe": "target_only",
+  "model_family": "RBF-SVM",
+  "C": 10.0,
+  "gamma": 0.01,
+  "class_weight": "balanced",
+  "augmentation_policy": "horizontal_vertical",
+  "augmentation_transforms": [
+    "original",
+    "horizontal",
+    "vertical",
+    "both"
+  ],
+  "real_gold_trials": 315,
+  "fitted_rows_after_augmentation": 1260,
+  "matrix_shape": [
+    18,
+    29
+  ],
+  "feature_count": 51,
+  "selected_by": "nested Leave-One-Operator-Out modal configuration",
+  "cross_validated_macro_f1": 0.8315819117395017,
+  "cross_validated_balanced_accuracy": 0.8285714285714285,
+  "trained_at_utc": "2026-08-21T06:52:31.835767+00:00"
+}

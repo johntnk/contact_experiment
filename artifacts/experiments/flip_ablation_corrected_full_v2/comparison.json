@@ -1,0 +1,20 @@
+{
+  "none": {
+    "augmentation_multiplier": 1,
+    "macro_f1": 0.7851439153716698,
+    "balanced_accuracy": 0.7841269841269841,
+    "accuracy": 0.7841269841269841
+  },
+  "horizontal": {
+    "augmentation_multiplier": 2,
+    "macro_f1": 0.7872134356326156,
+    "balanced_accuracy": 0.7873015873015873,
+    "accuracy": 0.7873015873015873
+  },
+  "horizontal_vertical": {
+    "augmentation_multiplier": 4,
+    "macro_f1": 0.8089106319477839,
+    "balanced_accuracy": 0.8063492063492064,
+    "accuracy": 0.8063492063492064
+  }
+}

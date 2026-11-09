@@ -1,0 +1,61 @@
+{
+  "schema_version": "deepskin-live-inference-v1",
+  "recorded_at_utc": "2026-08-21T07:42:54.916013+00:00",
+  "expected_label": "STATIC_TOUCH",
+  "predicted_label": "STATIC_TOUCH",
+  "expected_match": true,
+  "ranked_decision_scores": [
+    {
+      "label": "STATIC_TOUCH",
+      "score": 6.286927443773563
+    },
+    {
+      "label": "POKE",
+      "score": 5.283718445580802
+    },
+    {
+      "label": "RUB",
+      "score": 4.228556000337439
+    },
+    {
+      "label": "STROKE",
+      "score": 2.891111696971061
+    },
+    {
+      "label": "TAP",
+      "score": 1.7312596380187784
+    },
+    {
+      "label": "IMPACT",
+      "score": 0.7513617137697612
+    },
+    {
+      "label": "PAT",
+      "score": -0.2888972194550371
+    }
+  ],
+  "model_sha256": "eb6c1ad44c1ad50ee9b9984e550b3724af3522a1f9e508f0d3f2ce70b86a6d4d",
+  "raw_capture_file": "01_static_touch.npz",
+  "raw_capture_sha256": "7223143e960eb935695125d37a474a5d54f119b1d77d9a8d89eac68ce98c4de5",
+  "event_segmentation": true,
+  "segment_info": {
+    "found": true,
+    "threshold": 3.0,
+    "start_ms": 1265.0,
+    "end_ms": 3984.0,
+    "padded_start_ms": 1172.0,
+    "padded_end_ms": 3984.0
+  },
+  "matrix_shape": [
+    739,
+    18,
+    29
+  ],
+  "frame_count": 739,
+  "duration_ms": 3984.0,
+  "host_poll_rate_hz": 185.49196787148594,
+  "matrix_min": -3.0,
+  "matrix_max": 19.0,
+  "matrix_finite": true,
+  "sdk_touch_true_frames": 0
+}

@@ -1,0 +1,36 @@
+sequence,trial_id,operator_id,session_id,seed,instruction_label,intensity,speed,direction,position,contact_style,pulse_count,notes
+1,trial_000001,operator_02,session_01,20260921,STROKE,NORMAL,SLOW,LEFT_TO_RIGHT,CENTER,FINGERTIP,,long path
+2,trial_000002,operator_02,session_01,20260921,STROKE,NORMAL,MEDIUM,RIGHT_TO_LEFT,CENTER,FINGERTIP,,medium path
+3,trial_000003,operator_02,session_01,20260921,STATIC_TOUCH,LIGHT,SLOW,,CENTER,FINGERTIP,,short duration
+4,trial_000004,operator_02,session_01,20260921,PAT,LIGHT,SLOW,,CENTER,PALM,2,nearby pulses
+5,trial_000005,operator_02,session_01,20260921,IMPACT,NORMAL,,,CENTER,BROAD,,single safe impact
+6,trial_000006,operator_02,session_01,20260921,POKE,LIGHT,,,TOP,FINGERTIP,,clear inward pressure
+7,trial_000007,operator_02,session_01,20260921,STROKE,LIGHT,FAST,TOP_TO_BOTTOM,CENTER,FINGERTIP,,short path
+8,trial_000008,operator_02,session_01,20260921,IMPACT,FIRM,,,CENTER,FOCUSED,,single safe impact
+9,trial_000009,operator_02,session_01,20260921,IMPACT,NORMAL,,,CENTER,BROAD,,single safe impact
+10,trial_000010,operator_02,session_01,20260921,TAP,LIGHT,,,CENTER,FINGERTIP,,single contact
+11,trial_000011,operator_02,session_01,20260921,STROKE,LIGHT,MEDIUM,BOTTOM_TO_TOP,CENTER,FINGERTIP,,medium path
+12,trial_000012,operator_02,session_01,20260921,RUB,NORMAL,SLOW,HORIZONTAL,CENTER,FINGERTIP,1,one return cycle
+13,trial_000013,operator_02,session_01,20260921,POKE,NORMAL,,,CENTER,FINGERTIP,,clear inward pressure
+14,trial_000014,operator_02,session_01,20260921,TAP,NORMAL,,,TOP_LEFT,FINGERTIP,,single contact
+15,trial_000015,operator_02,session_01,20260921,STATIC_TOUCH,NORMAL,MEDIUM,,CENTER,PALM,,medium duration
+16,trial_000016,operator_02,session_01,20260921,RUB,NORMAL,MEDIUM,VERTICAL,CENTER,FINGERTIP,2,two return cycles
+17,trial_000017,operator_02,session_01,20260921,PAT,NORMAL,MEDIUM,,CENTER,PALM,3,nearby pulses
+18,trial_000018,operator_02,session_01,20260921,RUB,FIRM,FAST,HORIZONTAL,CENTER,PALM,3,three return cycles
+19,trial_000019,operator_02,session_01,20260921,POKE,FIRM,,,BOTTOM,FINGERTIP,,clear inward pressure
+20,trial_000020,operator_02,session_01,20260921,RUB,NORMAL,SLOW,HORIZONTAL,CENTER,FINGERTIP,1,one return cycle
+21,trial_000021,operator_02,session_01,20260921,IMPACT,FIRM,,,CENTER,FOCUSED,,single safe impact
+22,trial_000022,operator_02,session_01,20260921,PAT,FIRM,FAST,,CENTER,PALM,4,nearby pulses
+23,trial_000023,operator_02,session_01,20260921,STATIC_TOUCH,FIRM,SLOW,,CENTER,PALM,,long duration
+24,trial_000024,operator_02,session_01,20260921,POKE,LIGHT,,,TOP,FINGERTIP,,clear inward pressure
+25,trial_000025,operator_02,session_01,20260921,STATIC_TOUCH,LIGHT,SLOW,,CENTER,FINGERTIP,,short duration
+26,trial_000026,operator_02,session_01,20260921,IMPACT,NORMAL,,,CENTER,BROAD,,single safe impact
+27,trial_000027,operator_02,session_01,20260921,POKE,NORMAL,,,CENTER,FINGERTIP,,clear inward pressure
+28,trial_000028,operator_02,session_01,20260921,RUB,NORMAL,MEDIUM,VERTICAL,CENTER,FINGERTIP,2,two return cycles
+29,trial_000029,operator_02,session_01,20260921,PAT,LIGHT,SLOW,,CENTER,PALM,2,nearby pulses
+30,trial_000030,operator_02,session_01,20260921,TAP,FIRM,,,BOTTOM_RIGHT,FINGERTIP,,single contact
+31,trial_000031,operator_02,session_01,20260921,PAT,NORMAL,MEDIUM,,CENTER,PALM,3,nearby pulses
+32,trial_000032,operator_02,session_01,20260921,TAP,LIGHT,,,CENTER,FINGERTIP,,single contact
+33,trial_000033,operator_02,session_01,20260921,STATIC_TOUCH,NORMAL,MEDIUM,,CENTER,PALM,,medium duration
+34,trial_000034,operator_02,session_01,20260921,TAP,NORMAL,,,TOP_LEFT,FINGERTIP,,single contact
+35,trial_000035,operator_02,session_01,20260921,STROKE,NORMAL,SLOW,LEFT_TO_RIGHT,CENTER,FINGERTIP,,long path
